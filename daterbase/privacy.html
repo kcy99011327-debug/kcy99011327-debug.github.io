@@ -1,69 +1,9 @@
 <!doctype html>
 <html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Daterbase 개인정보처리방침</title>
-<style>
-:root{--bg:#fafafa;--fg:#222;--mut:#666;--card:#fff;--ln:#e5e5e5}
-@media (prefers-color-scheme:dark){:root{--bg:#161616;--fg:#eee;--mut:#aaa;--card:#202020;--ln:#333}}
-body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.75 Pretendard,-apple-system,"Apple SD Gothic Neo","Malgun Gothic",sans-serif}
-main{max-width:720px;margin:0 auto;padding:40px 16px 60px}
-h1{font-size:24px;margin:0 0 4px}h2{font-size:17px;margin:28px 0 6px}
-.mut{color:var(--mut);font-size:13px}section{background:var(--card);border:1px solid var(--ln);border-radius:14px;padding:4px 20px 16px;margin-top:16px}
-ul{padding-left:20px}
-</style></head><body><main>
-<h1>Daterbase 개인정보처리방침</h1><p class="mut"><a href="#en">English</a> · <a href="./about/">Daterbase 소개 / About</a></p>
-<p class="mut">시행일: 2026년 10월 18일</p>
-<section>
-<h2>1. 어떤 앱인가요</h2>
-<p>Daterbase는 플래너 · 커미션 관리 · 기록 · 가계부를 한곳에서 쓰는 개인용 앱이에요. 개발자가 운영하는 서버는 없고, 모든 데이터는 사용자의 기기(또는 사용자가 직접 연결한 본인 소유의 Supabase 프로젝트)에만 저장돼요.</p>
-<h2>2. 구글 캘린더 데이터</h2>
-<ul>
-<li>사용자가 "구글 계정 연결"을 눌러 허락한 경우에만, 구글 캘린더 일정을 읽고 쓰기 위해 Google Calendar API(https://www.googleapis.com/auth/calendar)를 사용해요.</li>
-<li>가져온 일정은 앱의 타임테이블에 보여 주고, 앱에서 만든 일정을 사용자의 구글 캘린더에 반영하는 데에만 써요.</li>
-<li>구글 계정 정보와 일정 데이터는 사용자의 기기 안에만 저장되며, 개발자나 제3자에게 전송 · 판매 · 공유하지 않아요. 광고나 분석에 쓰지 않아요.</li>
-<li>Google API에서 받은 정보의 사용은 <a href="https://developers.google.com/terms/api-services-user-data-policy">Google API 서비스 사용자 데이터 정책</a>(제한적 사용 요건 포함)을 따라요.</li>
-</ul>
-<h2>3. 그 밖의 데이터</h2>
-<ul>
-<li>일정 · 할 일 · 기록 · 이미지 등은 사용자의 기기에 저장돼요. 동기화를 켜면 사용자가 직접 만든 Supabase 프로젝트에만 저장돼요.</li>
-<li>개발자는 사용자의 데이터에 접근할 수 없어요.</li>
-<li>앱은 하루 한 번, 기기의 무작위 번호와 함께 앱 버전·환경, 탭을 연 횟수, 주요 동작 횟수, 켜는 데 걸린 시간, 저장 공간 크기 구간, 오류 메시지(따옴표 안 글자는 지움)를 개발자의 집계 시트로 보내요. 버그를 고치고 많이 쓰는 기능을 알기 위해서예요. 일정·메모·금액·이름 같은 내용은 보내지 않아요. 설정 › 공통 › 데이터·도움 › 사용 통계에서 끌 수 있어요.</li>
-<li>구글 캘린더를 처음 연결하면, 연결한 인원수를 세기 위해 그 기기의 무작위 번호 하나만 개발자의 집계 시트로 보내요. 이메일·구글 계정·일정 등 다른 정보는 보내지 않아요.</li>
-</ul>
-<h2>4. 연결 해제와 삭제</h2>
-<ul>
-<li>앱 설정 › 구글 캘린더 연동에서 "연결 해제"를 누르면 기기에 저장된 구글 로그인 정보가 지워져요.</li>
-<li>구글 계정의 <a href="https://myaccount.google.com/permissions">서드 파티 액세스 관리</a>에서도 언제든 권한을 취소할 수 있어요.</li>
-<li>앱 데이터는 앱 설정에서 지우거나, 앱을 삭제하면 기기에서 지워져요.</li>
-</ul>
-<h2>5. 문의</h2>
-<p>앱 안의 "사용 설명서 · 오류 문의" 또는 구글 동의 화면에 표시된 지원 이메일로 연락해 주세요.</p>
-</section>
-<section id="en" lang="en">
-<h2>Privacy Policy (English)</h2>
-<p class="mut">Effective: October 18, 2026</p>
-<h2>1. About the app</h2>
-<p>Daterbase is a personal app that combines a planner, commission (art request) management, records and a budget book. The developer runs no servers. All data is stored only on the user's device, or in a Supabase project that the user creates and owns.</p>
-<h2>2. Google Calendar data</h2>
-<ul>
-<li>Only when the user presses "Connect Google account" and grants permission, the app uses the Google Calendar API (https://www.googleapis.com/auth/calendar) to read and write the user's calendar events.</li>
-<li>Events are used only to show them in the app's timetable and to reflect events the user creates in the app back to the user's own Google Calendar.</li>
-<li>Google account information and calendar data are stored only on the user's device. They are never sent, sold or shared with the developer or any third party, and are not used for advertising or analytics.</li>
-<li>Daterbase's use and transfer of information received from Google APIs adheres to the <a href="https://developers.google.com/terms/api-services-user-data-policy">Google API Services User Data Policy</a>, including the Limited Use requirements.</li>
-</ul>
-<h2>3. Other data</h2>
-<ul>
-<li>Schedules, to-dos, records and images are stored on the user's device. If sync is turned on, they are stored only in the user's own Supabase project.</li>
-<li>The developer cannot access user data.</li>
-<li>Once a day, the app sends a random device identifier together with the app version and environment, how often each tab was opened, counts of main actions, startup time, a storage size range, and error messages (with quoted text removed) to the developer's counter sheet. This is used to fix bugs and to learn which features are used. No content such as schedules, notes, amounts or names is sent. You can turn this off in Settings › Common › Data &amp; help › Usage stats.</li>
-<li>When Google Calendar is connected for the first time, the app sends only a random device identifier to the developer's counter sheet, to count how many devices have connected. No email address, Google account information or calendar data is sent.</li>
-</ul>
-<h2>4. Disconnecting and deleting</h2>
-<ul>
-<li>In Settings › Google Calendar, "Disconnect" removes the Google sign-in data stored on the device.</li>
-<li>Access can be revoked at any time from <a href="https://myaccount.google.com/permissions">Google Account › Third-party access</a>.</li>
-<li>App data can be deleted in the app settings, or by uninstalling the app.</li>
-</ul>
-<h2>5. Contact</h2>
-<p>Use "Help · Report a problem" inside the app, or the support email shown on the Google consent screen.</p>
-</section>
-</main></body></html>
+<title>Daterbase 개인정보 처리방침</title>
+<link rel="canonical" href="https://daterbase.net/privacy">
+<meta http-equiv="refresh" content="0; url=https://daterbase.net/privacy">
+</head><body style="font-family:system-ui,sans-serif;padding:24px">
+<p>개인정보 처리방침은 <a href="https://daterbase.net/privacy">daterbase.net/privacy</a>로 옮겼어요.</p>
+<p>The privacy policy has moved to <a href="https://daterbase.net/privacy">daterbase.net/privacy</a>.</p>
+</body></html>

@@ -420,3 +420,48 @@ html body.sk-village .vlg .rds{fill:color-mix(in srgb,#a9a39a 38%,#fffaf0)}
 html body.sk-village .vlg.miffy .tl.rd{fill:#8cc663}
 html body.sk-village .vlg.miffy .tl.rd.ou{fill:color-mix(in srgb,#8cc663 70%,#fff)}
 html body.sk-village .vlg.miffy .rds,html body.sk-village .vlg.miffy .ix{fill:#c4c1b8}
+
+/* 끌어서 화면 옮기기 */
+html body.sk-village .vlg .scr{cursor:grab;touch-action:none;user-select:none}
+html body.sk-village .vlg.pan .scr,html body.sk-village .vlg.pan .scr *{cursor:grabbing!important}
+
+/* 미피 퍼즐 색감 (04 참고 이미지): 주황 #f26935 · 진초록 #24722a · 노랑 #ffdd50 · 파랑 #005b93 · 갈색 #6c3304, 먹색 선 */
+html body.sk-village .vlg.miffy{--ink2:#1d1d1b;--gg:#3b8a3c}
+html body.sk-village .vlg.miffy .tl{stroke:none}
+html body.sk-village .vlg.miffy .tl.gr,html body.sk-village .vlg.miffy .tl.rd,html body.sk-village .vlg.miffy .tl.ou.gr,html body.sk-village .vlg.miffy .tl.rd.ou{fill:#24722a}
+html body.sk-village .vlg.miffy .tl.yd{fill:#3d8f3a}
+html body.sk-village .vlg.miffy .tl.pkg{fill:#2f8233}
+html body.sk-village .vlg.miffy .tl.pv{fill:#ffdd50}
+html body.sk-village .vlg.miffy .tl.cur{fill:#3d8f3a}
+html body.sk-village .vlg.miffy .tl.fu,html body.sk-village .vlg.miffy .tl.gr.fu{fill:#ffdd50;stroke:none}
+html body.sk-village .vlg.miffy .aly,html body.sk-village .vlg.miffy .tl.ln{fill:#ffdd50}
+html body.sk-village .vlg.miffy .rds,html body.sk-village .vlg.miffy .ix{fill:#005b93}
+html body.sk-village .vlg.miffy .sw{fill:#fff}
+html body.sk-village .vlg.miffy .cl{stroke:#fff;opacity:.85}
+html body.sk-village .vlg.miffy .zb{fill:#fff}
+html body.sk-village .vlg.miffy .hz polygon{stroke:#1d1d1b}
+html body.sk-village .vlg.miffy .hz .lf{fill:#fff}
+html body.sk-village .vlg.miffy .hz .rt{fill:#fff}
+html body.sk-village .vlg.miffy svg .w{fill:#005b93}
+html body.sk-village .vlg.miffy .trc,html body.sk-village .vlg.miffy .trc.b2{fill:#3fa143;stroke:#1d1d1b}
+html body.sk-village .vlg.miffy .trc.b2{fill:#ffdd50}
+html body.sk-village .vlg.miffy .trk{fill:#6c3304;stroke:#1d1d1b}
+html body.sk-village .vlg.miffy .gh polygon{stroke:#2e7d33!important}
+html body.sk-village .vlg.miffy .gh .lf,html body.sk-village .vlg.miffy .gh .rt{fill:#4a9a47!important}
+html body.sk-village .vlg.miffy .gh .rf{fill:#3f8f3f!important}
+html body.sk-village .vlg.miffy .bn,html body.sk-village .vlg.miffy .bn.bnb,html body.sk-village .vlg.miffy .bn.bnf{fill:#f26935}
+html body.sk-village .vlg.miffy .hsh{fill:rgba(0,0,0,.18)}
+html body.sk-village .vlg.miffy .pkg2{fill:#3d8f3a}
+html body.sk-village .vlg.miffy .plz{fill:#ffdd50}
+html body.sk-village .vlg.miffy .pth{stroke:#ffdd50}
+html body.sk-village .vlg.miffy .gh polygon{stroke:#2c7a31!important}
+html body.sk-village .vlg.miffy .gh .lf,html body.sk-village .vlg.miffy .gh .rt{fill:#2f7d34!important}
+html body.sk-village .vlg.miffy .gh .rf{fill:#358539!important}
+html body.sk-village .vlg.miffy .bpk{fill:#3d8f3a}
+html body.sk-village .vlg.miffy .bpk-path{fill:#ffdd50}
+html body.sk-village .vlg.miffy .ftb{fill:#fff}
+html body.sk-village .vlg.miffy .tl.pkg:not(.rd):not(.gr):not(.fu):not(.cur){fill:#2f8233}
+html body.sk-village .vlg.miffy .tl.yd:not(.rd):not(.gr):not(.fu):not(.cur){fill:#3d8f3a}
+html body.sk-village .vlg.miffy .tl.pv:not(.rd):not(.gr):not(.fu):not(.cur){fill:#ffdd50}
+html body.sk-village .vlg.miffy .tl.ln:not(.rd):not(.gr):not(.fu):not(.cur){fill:#ffdd50}
+html body.sk-village .vlg.miffy .tl:not(.rd):not(.gr):not(.fu):not(.cur):not(.pkg):not(.yd):not(.pv):not(.ln){fill:#3d8f3a}

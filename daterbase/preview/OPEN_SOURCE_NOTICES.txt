@@ -14,11 +14,13 @@ Daterbase uses the following open source software and fonts.
 - Transformers.js 3.5.1 — Apache License 2.0 — Copyright Hugging Face
 - tesseract.js 5.1.1 (Tesseract OCR, 언어 데이터 포함) — Apache License 2.0 — Copyright tesseract.js contributors / Google
 - anime-seg 모델 (skytnt) — Apache License 2.0 — Copyright skytnt
+- Fluent Emoji (Microsoft, @lobehub/fluent-emoji-flat 1.1.0로 불러옴) — MIT — Copyright (c) Microsoft Corporation
 - Electron (PC 프로그램) — MIT — Copyright (c) Electron contributors, Copyright (c) 2013-2020 GitHub Inc.
   Chromium 및 포함 구성 요소의 라이선스는 설치 폴더의 LICENSES.chromium.html에 있습니다.
 
 [글꼴 / Fonts] — SIL Open Font License 1.1
 - Pretendard — Copyright (c) 2021, Kil Hyung-jin (https://github.com/orioncactus/pretendard), with Reserved Font Name Pretendard.
+  앱 안의 'DB Sans'는 Pretendard에서 일부 글자만 담아 이름을 바꾼 글꼴입니다 (OFL 1.1, 원 저작권 Kil Hyung-jin). / 'DB Sans' in the app is a renamed subset of Pretendard (OFL 1.1, original copyright Kil Hyung-jin).
 - Sedgwick Ave, Sedgwick Ave Display (앱 안에서 일부 글자만 담아 'DB Scrawl', 'DB Tag'로 사용) — Copyright 2017 The Sedgwick Ave Project Authors (https://github.com/googlefonts/sedgwickave)
 - Google Fonts에서 불러오는 글꼴: Do Hyeon, Gaegu, Nanum Gothic Coding, Nanum Myeongjo, Nanum Pen Script, Nanum Brush Script, Gowun Batang, IBM Plex Sans KR, Noto Serif KR, Anton, Oswald, Archivo, Archivo Black, Bricolage Grotesque, Inter, JetBrains Mono, Space Mono, Courier Prime, Mr Dafoe — 각 저작권자, SIL Open Font License 1.1
 

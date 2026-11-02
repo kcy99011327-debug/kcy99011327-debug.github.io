@@ -15,14 +15,14 @@ function build(st){
   const ys=new Set([Y0]);(st.comm||[]).forEach(c=>{if(c.doneDate)ys.add(+c.doneDate.slice(0,4));});(st.outs||[]).forEach(o=>{const d=o.due||o.start;if(d)ys.add(+d.slice(0,4));});YRS=[...ys].filter(x=>x>2000&&x<=Y0).sort();
   (st.comm||[]).forEach(c=>{const k=kindOf(c.status);if(k=="cancel")return;
     const fee=num(c.quoteAfter!=null?c.quoteAfter:c.quoteBefore!=null?c.quoteBefore:c.price);
-    const cl=(c.client||"").trim()||"이름 없음",t=c.subtype||"커미션";
-    if(c.doneDate||k=="done"){const dd=c.doneDate||"";if(!dd.startsWith(Y+"-"))return;out.push({id:id++,k:"c",cl,t,fee,m:+dd.slice(5,7)-1,d:+dd.slice(8,10),start:+((c.reqDate||dd).slice(8,10))||1,done:true,ord:c.order||0});}
-    else if(Y==Y0){const i=act.indexOf(c.status);out.push({id:id++,k:"c",cl,t,fee,m:CM,d:0,done:false,p:Math.round(100*(i+1)/(act.length+1)),ord:c.order||0});}});
+    const cl=(c.client||"").trim()||"이름 없음",t=c.subtype||"커미션";const ims=(c.images||[]).filter(x=>x&&x.id),cv=ims.find(x=>x.cover)||ims.find(x=>(x.kind||"완성본")=="완성본")||ims.find(x=>x.kind!="레퍼런스"&&x.kind!="참고"),im=cv?(cv.t||cv.id):null;
+    if(c.doneDate||k=="done"){const dd=c.doneDate||"";if(!dd.startsWith(Y+"-"))return;out.push({id:id++,uid:"c:"+(c.id!=null?c.id:id),k:"c",cl,t,fee,im,m:+dd.slice(5,7)-1,d:+dd.slice(8,10),start:+((c.reqDate||dd).slice(8,10))||1,done:true,ord:c.order||0});}
+    else if(Y==Y0){const i=act.indexOf(c.status);out.push({id:id++,uid:"c:"+(c.id!=null?c.id:id),k:"c",cl,t,fee,m:CM,d:0,done:false,p:Math.round(100*(i+1)/(act.length+1)),ord:c.order||0});}});
   (st.outs||[]).forEach(o=>{const S=o.stages&&o.stages.length?o.stages:[{id:"s0",total:o.total}];
     const tot=S.reduce((a,x)=>a+num(x.total!=null?x.total:o.total),0),dn=(o.log||[]).reduce((a,l)=>a+num(l.n),0);
     const fee=S.reduce((a,x)=>a+num(x.price)*num(x.total!=null?x.total:o.total),0),cl=(o.client||"").trim()||"외주",t=o.title||"외주";
-    if(tot>0&&dn>=tot){const dd=o.due||o.start||"";if(!dd.startsWith(Y+"-"))return;out.push({id:id++,k:"o",cl,t,fee,pg:o.total,m:+dd.slice(5,7)-1,d:+dd.slice(8,10),start:+((o.start||dd).slice(8,10))||1,done:true});}
-    else if(Y==Y0&&!o.arch&&!o.hidden)out.push({id:id++,k:"o",cl,t,fee,pg:o.total,m:CM,d:0,done:false,p:tot?Math.min(99,Math.round(100*dn/tot)):0});});
+    if(tot>0&&dn>=tot){const dd=o.due||o.start||"";if(!dd.startsWith(Y+"-"))return;out.push({id:id++,uid:"o:"+(o.id!=null?o.id:id),k:"o",cl,t,fee,pg:o.total,m:+dd.slice(5,7)-1,d:+dd.slice(8,10),start:+((o.start||dd).slice(8,10))||1,done:true});}
+    else if(Y==Y0&&!o.arch&&!o.hidden)out.push({id:id++,uid:"o:"+(o.id!=null?o.id:id),k:"o",cl,t,fee,pg:o.total,m:CM,d:0,done:false,p:tot?Math.min(99,Math.round(100*dn/tot)):0});});
   // 자리: 달마다 3×3, 넘치면 다음 달 빈 칸으로
   const place=j=>{j.lot=0;return true};
   out.filter(j=>j.done).sort((a,b)=>a.m-b.m||a.d-b.d).forEach(place);
@@ -31,11 +31,35 @@ function build(st){
   {const cnt={};out.filter(j=>j.k=="c").forEach(j=>cnt[j.t]=(cnt[j.t]||0)+1);SHP={};Object.keys(cnt).sort((x,y)=>cnt[y]-cnt[x]||x.localeCompare(y)).forEach((t,i)=>SHP[t]=i%6);}
   layout(out);const ht=j=>!j.done?0:j.k=="o"?[26,40,56][tier(j)]:[25,30,37][tier(j)];
   for(let m=0;m<12;m++){const g=out.filter(j=>j.m==m&&j.lot!=null);g.sort((a,b)=>ht(b)-ht(a)||a.d-b.d).forEach((j,i)=>j.lot=i);}
-  const cls=[...new Set(out.map(j=>j.cl))];ROOF={};
+  // 의뢰인 색은 해가 바뀌어도 같게: 모든 해의 의뢰인을 처음 나온 날짜 순으로
+  const cls=(()=>{const L=[];(st.comm||[]).forEach(c=>{const n=(c.client||"").trim()||"이름 없음";L.push([c.doneDate||c.reqDate||c.due||"9",n]);});(st.outs||[]).forEach(o=>{const n=(o.client||"").trim()||"외주";L.push([o.start||o.due||"9",n]);});L.sort((a,b)=>a[0]<b[0]?-1:a[0]>b[0]?1:0);const o=[...new Set(L.map(x=>x[1]))];out.forEach(j=>{if(!o.includes(j.cl))o.push(j.cl);});return o;})();ROOF={};
   let PL=null;try{PL=window.DB&&DB.skin.pal&&DB.skin.pal();}catch(e){}
-  cls.forEach((n,i)=>{if(MIFFY){ROOF[n]=BRUNA[i%BRUNA.length];return;}const c=PL&&PL.length?PL[i%PL.length]:"var(--r"+(i%8+1)+")";ROOF[n]=`color-mix(in srgb,${c} 78%,#fff6e8)`;});
+  cls.forEach((n,i)=>{if(MIFFY){const R6=vpNow().r;ROOF[n]=R6[i%R6.length];return;}const c=PL&&PL.length?PL[i%PL.length]:"var(--r"+(i%8+1)+")";ROOF[n]=`color-mix(in srgb,${c} 78%,#fff6e8)`;});
   return out.filter(j=>j.lot!=null);
 }
+// 테마(팔레트)마다 마을 색: M=섞는 바탕(라이트 흰색, 다크 바탕색) G 풀 G2 마당 Pk 공원 R 도로 L 노랑 자리 W 물 S 얕은 물 Sd 모래 T/T2 나무 K 줄기 Win 창문 Bn 벤치 A 다리 Ink 선 Wall 벽 r 지붕
+const VPK=["M","G","G2","Pk","R","L","W","S","Sd","T","T2","K","Win","Bn","A","Ink","Wall"];
+const VP0={M:"#fff",G:"#7dbb68",G2:"#93c97c",Pk:"#86c270",R:"#005b93",L:"#ffdd50",W:"#3f8fd0",S:"#6cc3e0",Sd:"#f4dc9a",T:"#2f8a36",T2:"#ffdd50",K:"#6c3304",Win:"#005b93",Bn:"#f26935",A:"#f26935",Ink:"#4d4a46",Wall:"#fff",r:["#f26935","#005b93","#ffdd50","#6c3304","#2f8a3a","#e3231b"]};
+const VPS={calm:{},
+folder:{M:"#fff4b8",G:"#f7d417",G2:"#f9dc3a",Pk:"#f2cc12",R:"#1D4BA8",L:"#ffffff",W:"#1D4BA8",S:"#3D6FCC",Sd:"#ffe878",T:"#1D4BA8",T2:"#3D6FCC",K:"#1E2140",Win:"#1D4BA8",Bn:"#1D4BA8",A:"#1D4BA8",Ink:"#1E2140",r:["#1D4BA8","#3D6FCC","#ffc933","#1E2140","#7398DC","#f5b800"]},
+sakura:{G:"#b9d8a0",G2:"#cfe4bb",Pk:"#c4dcae",R:"#D9879C",L:"#ffffff",W:"#8fc0e3",S:"#c4e2f2",Sd:"#F7D4DB",T:"#F3B3C4",T2:"#e79bb0",K:"#8a5a5f",Win:"#D9879C",Bn:"#D9879C",A:"#D9879C",Ink:"#7a5560",r:["#F3B3C4","#D9879C","#EBBDBD","#c9768c","#F9CED8","#a8c8e8"]},
+green:{G:"#A7D08C",G2:"#CFE3B4",Pk:"#5FA86B",R:"#8C6A4F",L:"#F2B544",W:"#4f9c96",S:"#9fd6c5",Sd:"#E3F0C8",T:"#1F5C3A",T2:"#2F7A4A",K:"#8C6A4F",Win:"#1F5C3A",Bn:"#E8573C",A:"#E8573C",Ink:"#1F3D2B",r:["#E8573C","#F2B544","#2F7A4A","#8C6A4F","#1F5C3A","#5FA86B"]},
+pudding:{G:"#A8E6CF",G2:"#c9f0dd",Pk:"#9ddcc2",R:"#E9A23B",L:"#FFF4D6",W:"#9AD0F5",S:"#c4e4fa",Sd:"#FFE08A",T:"#7cc8a4",T2:"#F48FB1",K:"#8A5A3C",Win:"#8A5A3C",Bn:"#F48FB1",A:"#E8739B",Ink:"#6B4226",r:["#F48FB1","#FFB86B","#FFE08A","#C8A2E8","#9AD0F5","#E9A23B"]},
+cloud:{G:"#b9e3c6",G2:"#cdeee0",Pk:"#A6E3E9",R:"#9C8CF0",L:"#FFE7A3",W:"#8EC5FF",S:"#bcdcff",Sd:"#FFE3F1",T:"#C9B8FF",T2:"#FFB5D8",K:"#8a7fc0",Win:"#9C8CF0",Bn:"#FFB5D8",A:"#9C8CF0",Ink:"#4A4E7A",r:["#FFB5D8","#C9B8FF","#9C8CF0","#8EC5FF","#FFD0B5","#FFE7A3"]},
+lilac:{G:"#cbd3f0",G2:"#dfe4f7",Pk:"#B9C3F2",R:"#6E85D1",L:"#eef6fb",W:"#A9D2EC",S:"#cfe6f4",Sd:"#F2C5D6",T:"#4E7F9C",T2:"#C9A6E0",K:"#4E7F9C",Win:"#6E85D1",Bn:"#C9A6E0",A:"#6E85D1",Ink:"#3d4570",r:["#6E85D1","#C9A6E0","#F2C5D6","#4E7F9C","#A9D2EC","#B9C3F2"]},
+sunny:{G:"#9BD770",G2:"#b5e290",Pk:"#9BD770",R:"#5CB8E4",L:"#FFE45C",W:"#5CB8E4",S:"#7FDDE8",Sd:"#ffe9a8",T:"#4fa83a",T2:"#FF9CC2",K:"#a0622d",Win:"#0730d5",Bn:"#F28C38",A:"#FF9CC2",Ink:"#3b3a5a",r:["#FFE45C","#FFB938","#FF9CC2","#5CB8E4","#F28C38","#0730d5"]},
+mono:{G:"#c9ddd6",G2:"#dfe6e3",Pk:"#cfdcd6",R:"#3c3b39",L:"#f3c15e",W:"#3473b7",S:"#9fbfdc",Sd:"#ede6d3",T:"#4D7A5A",T2:"#f3c15e",K:"#3c3b39",Win:"#3c3b39",Bn:"#d54134",A:"#d54134",Ink:"#2A2724",r:["#3c3b39","#d54134","#3473b7","#f3c15e","#4D7A5A","#7A3D5D"]},
+rocket:{G:"#B6B6B6",G2:"#cfcfcf",Pk:"#c4c4c4",R:"#005288",L:"#fc5822",W:"#1D7373",S:"#2dacae",Sd:"#F4F4F4",T:"#1D7373",T2:"#2dacae",K:"#1A1A1A",Win:"#005288",Bn:"#fc5822",A:"#fc5822",Ink:"#1A1A1A",r:["#fc5822","#2dacae","#005288","#1D7373","#e55010","#1A1A1A"]},
+maroon:{G:"#a8a26a",G2:"#E1D3A9",Pk:"#8F7C3A",R:"#734F31",L:"#E1D3A9",W:"#5E7C80",S:"#9bb0a8",Sd:"#E1D3A9",T:"#A85530",T2:"#8F7C3A",K:"#371E13",Win:"#371E13",Bn:"#5E2A25",A:"#A85530",Ink:"#371E13",r:["#5E2A25","#A85530","#C0AA8A","#734F31","#8F7C3A","#371E13"]},
+tarp:{G:"#d9dcd2",G2:"#e6e6e6",Pk:"#cfd6c4",R:"#3670FF",L:"#F9D601",W:"#1F3FA8",S:"#9DB8FF",Sd:"#FFE97A",T:"#1F3FA8",T2:"#F9D601",K:"#171717",Win:"#3670FF",Bn:"#F9D601",A:"#3670FF",Ink:"#171717",r:["#F9D601","#3670FF","#1F3FA8","#9DB8FF","#171717","#FFE97A"]},
+blockdark:{M:"#172033",G:"#8fb83a",G2:"#9fd13a",Pk:"#2EC4D6",R:"#5A6478",L:"#FFD84D",W:"#2EC4D6",S:"#7C8CFF",Sd:"#FFD84D",T:"#7C8CFF",T2:"#FF9AD5",K:"#5A6478",Win:"#FFD84D",Bn:"#FF7A1A",A:"#FF9AD5",Ink:"#0b1020",Wall:"#E9EDF5",r:["#FF9AD5","#C3F53C","#2EC4D6","#FF7A1A","#7C8CFF","#FFD84D"]},
+neon:{M:"#021826",G:"#0b8a6a",G2:"#0d9c74",Pk:"#01595A",R:"#3FC1C9",L:"#EAF405",W:"#3FC1C9",S:"#06F284",Sd:"#9BFF6C",T:"#06F284",T2:"#f29eff",K:"#01595A",Win:"#EAF405",Bn:"#f29eff",A:"#f29eff",Ink:"#010d15",Wall:"#c7c7c7",r:["#f29eff","#06F284","#EAF405","#3FC1C9","#9BFF6C","#c7c7c7"]},
+alien:{M:"#060A07",G:"#1FA80B",G2:"#0F7A4A",Pk:"#2BD90F",R:"#00E5C7",L:"#39FF14",W:"#0F7A4A",S:"#00E5C7",Sd:"#B6FF9E",T:"#39FF14",T2:"#7CFF5C",K:"#0B3D2E",Win:"#39FF14",Bn:"#00E5C7",A:"#39FF14",Ink:"#020402",Wall:"#B6FF9E",r:["#39FF14","#00E5C7","#7CFF5C","#1FA80B","#B6FF9E","#0F7A4A"]},
+halloween:{M:"#120A1C",G:"#502C76",G2:"#6a4a9e",Pk:"#502C76",R:"#C9B8F0",L:"#FD8D10",W:"#8267D0",S:"#C9B8F0",Sd:"#FFC46B",T:"#FF5404",T2:"#FD8D10",K:"#07020A",Win:"#FFC46B",Bn:"#FF5404",A:"#FD8D10",Ink:"#07020A",Wall:"#C9B8F0",r:["#FF5404","#FD8D10","#8267D0","#FFC46B","#C9B8F0","#502C76"]}};
+const VPOLD={dawnsea:"lilac",iron:"rocket",bloom:"calm",pastel:"cloud",basic:"calm",candy:"pudding",tropical:"sunny",vivid:"sunny",nature:"green",vintage:"maroon",muted:"mono",deep:"maroon"};
+function vpKey(){try{const S=(DB.skin.R.get().settings)||{};let k=S.palKey||"calm";return VPOLD[k]||k;}catch(e){return"calm"}}
+function vpNow(){const k=vpKey();if(VPS[k])return Object.assign({},VP0,VPS[k],{k});let pl=null;try{pl=DB.skin.pal&&DB.skin.pal()}catch(e){}return Object.assign({},VP0,{k,r:pl&&pl.length>=4?pl.slice(0,6):VP0.r});}
+function vpApply(el){const v=vpNow();VPK.forEach(n=>el.style.setProperty("--v"+n,v[n]));el.dataset.vp=v.k;return v;}
 // ---------- 공통 ----------
 let pop,menu,toast,undoFn=null,tT;
 function vUiInit(){if(!document.getElementById("vlg-pop")){document.body.insertAdjacentHTML("beforeend",'<div class="vlg-pop" id="vlg-pop"></div><div class="vlg-menu" id="vlg-menu"></div><div class="vlg-toast" id="vlg-toast"><span data-t></span><button data-undo>되돌리기</button></div>');
@@ -46,6 +70,9 @@ function say(msg,u){toast.querySelector("[data-t]").textContent=msg;undoFn=u;toa
 function closeAll(){if(pop){pop.classList.remove("on");menu.classList.remove("on");}}
 function place(el,x,y){el.style.left=Math.min(x,innerWidth-el.offsetWidth-12)+"px";el.style.top=Math.min(y,innerHeight-el.offsetHeight-12)+"px";}
 let cur=null;
+const THU={};let THdb=null;function thumbURL(k){if(!k)return Promise.resolve(null);if(THU[k])return THU[k];
+  THdb=THdb||new Promise(res=>{try{const r=indexedDB.open("planner-commission");r.onsuccess=()=>res(r.result);r.onerror=()=>res(null);}catch(_){res(null)}});
+  return THU[k]=THdb.then(d=>{if(!d||!d.objectStoreNames.contains("blobs"))return null;return new Promise(res=>{try{const q=d.transaction("blobs").objectStore("blobs").get(k);q.onsuccess=()=>res(q.result?URL.createObjectURL(q.result):null);q.onerror=()=>res(null);}catch(_){res(null)}});});}
 let tip;function tipShow(j,x,y){if(pop&&pop.classList.contains("on"))return tipHide();
   if(!tip){tip=document.createElement("div");tip.className="vlg-tip";document.body.appendChild(tip);}
   const k=tip.dataset.id!=j.id;if(k){tip.dataset.id=j.id;tip.innerHTML=`<b>${j.cl}</b><span>${j.k=="c"?j.t:j.t+(j.pg?" · "+j.pg+"p":"")}</span><span>${j.done?`${j.m+1}월 ${j.d}일 완성`:"접는 중 "+j.p+"%"} · ${won(j.fee)}</span>`;}
@@ -82,9 +109,17 @@ function finish(j){const old={...j};j.done=true;j.m=CM;j.d=31;j.start=12;
   renderAll();document.querySelectorAll(`.hz[data-id="${j.id}"]`).forEach(g=>g.classList.add("fold-in"));say(`${j.cl} · ${j.t} 다 접었어요! (미리보기라 저장은 안 돼요)`,()=>{Object.assign(j,old);renderAll();});}
 const inMR=(x,y)=>MR.some(r=>x>=r.x&&x<r.x+r.w&&y>=r.y&&y<r.y+r.h),inPkY=inMR;
 // 길 한 줄(고정 좌표 f, 축 ax: 'x'=세로 길)에서 합친 블록에 끊기는 구간을 뺀 나머지 구간
+// 땅 모양: 마을 밖은 둥글고 들쭉날쭉한 둘레 땅(ZN 0) → 강(1) → 건너편 땅(2). 다리(BR)는 가운데 길 따라 밖으로
+const LIM=(x,y)=>Math.max(2.3,3.4+.9*Math.sin(x*.33+1.3)+.7*Math.sin(y*.29+.4)+.5*Math.sin((x+y)*.17+2.1)),RVW=(x,y)=>5+1.4*Math.sin(x*.21+y*.19+.7);
+// 해안 도시: 뒤쪽(y<0) 한 면만 육지로 이어지고(올라갈수록 해안선이 벌어짐) 나머지 세 면은 바다
+const FF=(px,py)=>{const up=py<0?-py:0,dx0=px<0?-px:px>GX?px-GX:0,dx=Math.max(0,dx0-up*1.3),dy=py>GY?py-GY:0;return Math.hypot(dx,dy)-LIM(px,py);},RW0=1e9;
+// 칸 네 꼭짓점이 모두 물가선(.45) 안이면 땅(0), 모두 건너편 선 밖이면 건너편(2), 아니면 물·모래(1, 칸 대신 매끈한 곡선으로 그림)
+const ZN=(x,y)=>{if(x>=0&&y>=0&&x<GX&&y<GY)return 0;const v=[FF(x,y),FF(x+1,y),FF(x,y+1),FF(x+1,y+1)];if(Math.max(...v)<.45)return 0;if(Math.min(...v)>RW0-.45)return 2;return 1;};
+const BRL=()=>({x:-99,y:-99}),BRL0=()=>{const ax=[...RDX].filter(v=>v<GX).sort((a,b)=>a-b),ay=[...RDY].filter(v=>v<GY).sort((a,b)=>a-b);return {x:ax.length?ax[Math.floor((ax.length-1)/2)]:-1,y:ay.length?ay[Math.floor((ay.length-1)/2)]:-1};};
+const BR=(x,y,b)=>(x==b.x&&(y<0||y>=GY))||(y==b.y&&(x<0||x>=GX));
 const rdSegs=(f,ax,a0,a1)=>{const cut=MR.filter(r=>ax=='x'?f>=r.x&&f<r.x+r.w:f>=r.y&&f<r.y+r.h).map(r=>ax=='x'?[r.y,r.y+r.h]:[r.x,r.x+r.w]).sort((a,b)=>a[0]-b[0]);let o=[],c=a0;cut.forEach(([u,v])=>{if(u>c)o.push([c,u]);c=Math.max(c,v);});if(a1>c)o.push([c,a1]);return o;};
 // 미피(딕 브루너) 색감: 납작한 원색 6가지 + 진한 테두리. false면 앱 테마 색
-const MIFFY=true,BRUNA=["#f26935","#005b93","#ffdd50","#6c3304","#ffffff","#24722a"];
+const MIFFY=true,BRUNA0=["#f26935","#005b93","#ffdd50","#6c3304","#2f8a3a","#e3231b"];
 let EMP=[],MR=[],DYN=[],TW=88,TH=44,GX=15,GY=12,PL=[],TI={},CEL={},LN={},ALY=[],PK=null,GDN=[],RDX=new Set(),RDY=new Set();
 // 달 구역 크기: 그 달 일 수에 맞춰 정사각형(최소 3×3). 같은 열은 가장 넓은 달, 같은 줄은 가장 깊은 달에 맞춤 → 길이 곧게 이어짐
 function layout(out){const n=Array(12).fill(0);out.forEach(j=>n[j.m]++);
@@ -158,7 +193,7 @@ function iso(j,cx,cy,sc=1){
   const f=.76,a=TW*f/2*sc,b=TH*f/2*sc,h=[26,40,56][t]*k,N=[cx,cy-b],E=[cx+a,cy],S=[cx,cy+b],Wp=[cx-a,cy];
   s+=`<polygon class="dsh bl" points="${P([Wp,S,up(S,h),up(Wp,h)])}" style="fill:${rf};filter:brightness(.8)"/><polygon class="dsh bl" points="${P([S,E,up(E,h),up(S,h)])}" style="fill:${rf}"/>`;
   s+=`<polygon class="bl" points="${P([up(Wp,h),up(N,h),up(E,h),up(S,h)])}" style="fill:${rf};filter:brightness(1.15)"/>`;
-  const fl=t+2;for(let k=0;k<fl;k++)for(const [p0,p1] of [[Wp,S],[S,E]])for(const u of [.22,.6])s+=`<polygon class="w" points="${face(p0,p1,u,u+.2,(k+.3)/(fl+.4),(k+.8)/(fl+.4),h)}"/>`;
+  const fl=t+2;for(let k=0;k<fl;k++)for(const [p0,p1] of [[Wp,S],[S,E]])for(const u of [.22,.6])s+=`<polygon class="w bw" points="${face(p0,p1,u,u+.2,(k+.3)/(fl+.4),(k+.8)/(fl+.4),h)}"/>`;
   return s;}
 let NET=true;
 function net(j,nx,ny,k,lot){const rf=ROOF[j.cl],u=13*k,fl=j.k=="o";
@@ -178,7 +213,9 @@ function net(j,nx,ny,k,lot){const rf=ROOF[j.cl],u=13*k,fl=j.k=="o";
     return d;};
   const tabs=`M${x0+W4} ${y0+u*.3}l${u*.45} ${u*.25}v${wh-u*1.1}l${-u*.45} ${u*.25}Z`+[0,1,2,3].map(i=>`M${X(i)+u*.15} ${y0+wh}l${u*.25} ${u*.4}h${ww-u*.8}l${u*.25} ${-u*.4}Z`).join("");
   const fold=`<path class="fold" d="${[1,2,3].map(i=>`M${X(i)} ${y0}v${wh}`).join("")}${fl?`M${X(1)} ${y0}h${ww}`:`M${x0} ${y0}h${W4}`}"/>`;
-  const panels=()=>pan.map((p,i)=>`<path class="pn${on(i)?" on":""}" d="${p.d}" style="${on(i)?`fill:${p.f};${p.fx?`filter:${p.fx}`:""}`:""}"/>`).join("")+deco()+fold;
+  // 바깥 테두리(자르는 선)는 실선, 접는 선은 점선
+  const outl=(()=>{let d=`M${x0} ${y0+wh}H${x0+W4}V${y0}`;if(fl)d+=`H${X(2)}V${y0-ww}H${X(1)}V${y0}H${x0}Z`;else{const gh=u,rh=u*1.25;for(let i=3;i>=0;i--){d+=i%2?`V${y0-rh}H${X(i)}V${y0}`:`L${X(i)+ww/2} ${y0-gh}L${X(i)} ${y0}`;}d+="Z";}return `<path class="outl" d="${d}"/>`;})();
+  const panels=()=>pan.map((p,i)=>`<path class="pn${on(i)?" on":""}" d="${p.d}" style="${on(i)?`fill:${p.f};${p.fx?`filter:${p.fx}`:""}`:""}"/>`).join("")+deco()+fold+outl;
   if(lot&&lot.flat){const [cx,cy]=lot,E=Math.hypot(TW/2,TH/2),sc=(lot.span||.92)*E/(W4+u*1.4),a=.894*sc,b=.447*sc;
     s+=`<g class="nt flat" transform="matrix(${a},${b},${-a},${b},${cx},${cy-(lot.lift||0)}) rotate(${lot.rot||0}) translate(${lot.dx||0},${lot.dy||0})">`;
     s+=`<rect class="sheet3" x="${x0-u*.6}" y="${y0-u*(fl?1.9:1.8)+(fl?u*.5:u*.5)}" width="${W4+u*1.4}" height="${wh+u*(fl?2.9:2.8)-u*1.2}" transform="translate(0,${-u*.5})"/><path class="tab" d="${tabs}"/>`+panels()+`</g>`;
@@ -192,17 +229,29 @@ function net(j,nx,ny,k,lot){const rf=ROOF[j.cl],u=13*k,fl=j.k=="o";
   s+=`</g><g transform="translate(${W4/2},${y0-u*1.6})"><rect class="pcb" x="-22" y="-10" width="44" height="20" rx="10"/><text class="pc" y="4" text-anchor="middle">${j.p}%</text></g></g></g>`;
   return s;}
 function mkIso(root,cfg){
-  const main=root.querySelector("[data-main]"),bd=root.querySelector("[data-board]");let R=0,filt="all",nbCl=null;let PAN={x:0,y:0},PK0=null;
+  const main=root.querySelector("[data-main]"),bd=root.querySelector("[data-board]");let R=0,filt="all",nbCl=null;let PAN={x:0,y:0},PK0=null,RSET=new Set();
+  // 마을 밖 길: 교차로끼리 이어진 구간만 남기고, 한쪽만 이어진 끝 구간은 계속 잘라내서 막다른 길이 없게
+  const buildRS=()=>{const ext=(lo,hi)=>{const o=[];for(let v=lo;v<=hi;v++)if(((v%5)+5)%5==4)o.push(v);return o;},EX=ext(-PAD,GX+PAD-1),EY=ext(-PAD,GY+PAD-1);
+    const inV=(x,y)=>x>=0&&y>=0&&x<GX&&y<GY,land=(x,y)=>ZN(x,y)==0,K=(x,y)=>x+","+y;
+    const cv={},ch={};EX.forEach(x=>cv[x]=rdSegs(x,'x',-PAD,GY+PAD));EY.forEach(y=>ch[y]=rdSegs(y,'y',-PAD,GX+PAD));
+    const on=(x,y,vert)=>land(x,y)&&(vert?cv[x]:ch[y]).some(([u,v])=>{const t=vert?y:x;return t>=u&&t<v;});
+    const nd=new Set();EX.forEach(x=>EY.forEach(y=>{if(land(x,y)&&!inMR(x,y))nd.add(K(x,y));}));
+    const E=[];EX.forEach(x=>{for(let i=0;i+1<EY.length;i++){const a=EY[i],b=EY[i+1];if(!nd.has(K(x,a))||!nd.has(K(x,b)))continue;let ok=true;for(let t=a;t<=b;t++)if(!on(x,t,1)){ok=false;break;}if(ok)E.push({a:K(x,a),b:K(x,b),v:1,f:x,u:a,w:b,on:1});}});
+    EY.forEach(y=>{for(let i=0;i+1<EX.length;i++){const a=EX[i],b=EX[i+1];if(!nd.has(K(a,y))||!nd.has(K(b,y)))continue;let ok=true;for(let t=a;t<=b;t++)if(!on(t,y,0)){ok=false;break;}if(ok)E.push({a:K(a,y),b:K(b,y),v:0,f:y,u:a,w:b,on:1});}});
+    const deg=()=>{const d={};E.forEach(e=>{if(e.on){d[e.a]=(d[e.a]||0)+1;d[e.b]=(d[e.b]||0)+1;}});return d;};
+    const inVk=k=>{const [x,y]=k.split(",").map(Number);return inV(x,y);};
+    for(let it=0;it<60;it++){const d=deg();let ch2=false;E.forEach(e=>{if(!e.on)return;if((d[e.a]==1&&!inVk(e.a))||(d[e.b]==1&&!inVk(e.b))){e.on=0;ch2=true;}});if(!ch2)break;}
+    const S=new Set();E.forEach(e=>{if(!e.on)return;for(let t=e.u;t<=e.w;t++)S.add(e.v?K(e.f,t):K(t,e.f));});return S;};
   const vis=j=>!j.hid&&(filt=="all"||j.k==filt);
   const lotXY=(m,i)=>PL[m].lots[i]||PL[m].lots[0];
   let RX=0,RY=0,RW=GX,RH=GY;const setReg=()=>{RX=-PAD;RY=-PAD;RW=GX+PAD*2;RH=GY+PAD*2;};
   const rot=(x,y)=>{x-=RX;y-=RY;return R==0?[x,y]:R==1?[RH-1-y,x]:R==2?[RW-1-x,RH-1-y]:[y,RW-1-x]};
   const W=()=>R%2?RH:RW,H=()=>R%2?RW:RH,scr=(x,y)=>[(x-y)*TW/2,(x+y)*TH/2];
   // 한 해 보기: 달 블록들이 차지하는 화면 범위(TW 단위). 이 범위가 화면을 꽉 채우게 맞춤
-  const bb=()=>{let x0=1e9,x1=-1e9,y0=1e9,y1=-1e9;PL.forEach(q=>{const c=q.cell;[[c.x+c.w/2,c.y+c.h/2]].concat(q.lots.map(([u,v])=>[u+.5,v+.5])).forEach(([u,v])=>{const [a,b]=rotC(u,v),X=(a-b)/2,Y=(a+b)/4;x0=Math.min(x0,X);x1=Math.max(x1,X);y0=Math.min(y0,Y);y1=Math.max(y1,Y);});});return {x0:x0-.9,x1:x1+.9,y0:y0-.9,y1:y1+.4};};
-  const fit=()=>{const sc=root.querySelector(".scr");if(!sc)return;const dk=root.querySelector(".desk"),t=dk.getBoundingClientRect().top+(document.scrollingElement||{}).scrollTop||0;{const nh=Math.max(360,Math.round(innerHeight-dk.getBoundingClientRect().top-16));if(Math.abs(nh-(dk._h||0))>20){dk._h=nh;dk.style.height=nh+"px";}}const n=FM==null?(GX+GY)/2*.95:(PL[FM].cell.w+PL[FM].cell.h)/2+1.2,aw=sc.clientWidth-60,wlE=root.querySelector("[data-wl]"),ah=sc.clientHeight-40-(wlE&&wlE.offsetHeight&&FM==null?wlE.offsetHeight+8:0);
+  const bb=()=>{let x0=1e9,x1=-1e9,y0=1e9,y1=-1e9;PL.forEach(q=>{const c=q.cell;[[c.x,c.y],[c.x+c.w,c.y],[c.x,c.y+c.h],[c.x+c.w,c.y+c.h]].forEach(([u,v])=>{const [a,b]=rotC(u,v),X=(a-b)/2,Y=(a+b)/4;x0=Math.min(x0,X);x1=Math.max(x1,X);y0=Math.min(y0,Y);y1=Math.max(y1,Y);});});return {x0:x0-.25,x1:x1+.25,y0:y0-.1,y1:y1+.15};};const WLH=()=>{const w=root.querySelector("[data-wl]");return w&&w.children.length>1?w.offsetHeight:0;},TOPP=58;
+  const fit=()=>{const sc=root.querySelector(".scr");if(!sc)return;const dk=root.querySelector(".desk"),t=dk.getBoundingClientRect().top+(document.scrollingElement||{}).scrollTop||0;{const nh=Math.max(360,Math.round(innerHeight-dk.getBoundingClientRect().top-16));if(Math.abs(nh-(dk._h||0))>4){dk._h=nh;dk.style.height=nh+"px";}}const n=FM==null?(GX+GY)/2*.95:(PL[FM].cell.w+PL[FM].cell.h)/2+1.2,aw=sc.clientWidth-60,wlE=root.querySelector("[data-wl]"),ah=sc.clientHeight-40-(wlE&&wlE.offsetHeight&&FM==null?wlE.offsetHeight+8:0);
     // 높이: 땅(n*TW/2) + 위 여유(건물·팻말 ≈ 1.6TW) + 두께
-    if(FM==null){const b=bb();TW=Math.max(30,Math.min((sc.clientWidth-20)/(b.x1-b.x0),(sc.clientHeight-10)/(b.y1-b.y0+.45),200));}else TW=Math.max(30,Math.min(aw/n,(ah-cfg.depth-20)/(n/2+1.7),240));TH=TW/2;};
+    if(FM==null){const b=bb();TW=Math.max(24,Math.min((sc.clientWidth-40)/(b.x1-b.x0),(sc.clientHeight-TOPP-WLH()-14)/(b.y1-b.y0),200));}else TW=Math.max(30,Math.min(aw/n,(ah-cfg.depth-20)/(n/2+1.7),240));TH=TW/2;};
   const RM=window.matchMedia&&matchMedia("(prefers-reduced-motion: reduce)").matches;
   let PAD=2;const rotC=(cx,cy)=>(cx-=RX,cy-=RY,R==0?[cx,cy]:R==1?[RH-cy,cx]:R==2?[RW-cx,RH-cy]:[cy,RW-cx]);
   const G=(gx,gy)=>[(gx-gy)*TW/2,(gx+gy)*TH/2];
@@ -284,7 +333,7 @@ function mkIso(root,cfg){
     let s=one(0,shirt);if(v%5==0)s+=one(4.6*k,["#f3d27c","#86cf9a","#e77fa0"][v%3]);
     else if(v%5==1)s+=`<g transform="translate(${5*k},0)"><ellipse class="crs" cx="0" cy="0" rx="${2.2*k}" ry="${.9*k}"/><ellipse cx="0" cy="${-1.8*k}" rx="${2.2*k}" ry="${1.3*k}" style="fill:#c9935f"/><circle cx="${1.9*k}" cy="${-3*k}" r="${1.1*k}" style="fill:#c9935f"/><line x1="${-1.2*k}" y1="${-6*k}" x2="${1.8*k}" y2="${-3.4*k}" class="leash"/></g>`;
     return s;}
-  function traffic(){let o="",n=0;const PLc=MIFFY?BRUNA.slice(0,4):(()=>{try{return DB.skin.pal&&DB.skin.pal()}catch(e){return null}})()||["var(--r1)","var(--r2)","var(--r3)","var(--r4)"];
+  function traffic(){let o="",n=0;const PLc=MIFFY?vpNow().r.slice(0,4):(()=>{try{return DB.skin.pal&&DB.skin.pal()}catch(e){return null}})()||["var(--r1)","var(--r2)","var(--r3)","var(--r4)"];
     const lines=[];RDX.forEach(x=>{if(x<GX)rdSegs(x,'x',0,GY).forEach(([u,v])=>{if(v-u>1.5)lines.push({a:[x+.5,u],b:[x+.5,v-.001],v:1});});});RDY.forEach(y=>{if(y<GY)rdSegs(y,'y',0,GX).forEach(([u,v])=>{if(v-u>1.5)lines.push({a:[u,y+.5],b:[v-.001,y+.5],v:0});});});
     lines.forEach((ln,i)=>{const len=Math.hypot(ln.b[0]-ln.a[0],ln.b[1]-ln.a[1]);
       [1,-1].forEach(dir=>{if(hsh(i*11+dir*3)%3==0)return;const off=.14*dir,A=ln.v?[ln.a[0]+off,ln.a[1]]:[ln.a[0],ln.a[1]-off],B=ln.v?[ln.b[0]+off,ln.b[1]]:[ln.b[0],ln.b[1]-off];
@@ -299,17 +348,25 @@ function mkIso(root,cfg){
   // 도로: 인도 턱, 가운데 점선, 교차로 옆 횡단보도
   function roadDeco(){const Q=pts=>P(pts.map(p=>G(...rotC(...p))));let d="",cl="";
     const isI=(x,y)=>RDX.has(x)&&RDY.has(y),RI=.2;// 길은 칸 가운데 60%만(양옆은 잔디)
-    const a0=-PAD,ax=GX+PAD,ay=GY+PAD;
+    const a0=-PAD,ax=GX+PAD,ay=GY+PAD,BB=BRL(),okR=(x,y)=>(x>=0&&y>=0&&x<GX&&y<GY)||RSET.has(x+","+y);
+    const clip=(segs,f,vert)=>{const o=[];segs.forEach(([a,b])=>{let s0=null;for(let t=Math.ceil(a);t<b;t++){const ok=vert?okR(f,t):okR(t,f);if(ok&&s0==null)s0=t;if(!ok&&s0!=null){o.push([s0,t]);s0=null;}}if(s0!=null)o.push([s0,b]);});return o;};
+    let brg="";
     // 바깥 동네 길도 마을 길과 같은 간격(5칸마다)·같은 모양으로
-    const ext=(lo,hi)=>{const o=[];for(let v=Math.ceil(lo);v<=hi;v++)if(((v%5)+5)%5==4)o.push(v);return o;},EX=ext(a0,ax),EY=ext(a0,ay);
+    const ext=(lo,hi)=>{const o=[];for(let v=Math.ceil(lo);v<=hi;v++)if(((v%5)+5)%5==4)o.push(v);return o;},EX=ext(a0,ax-1),EY=ext(a0,ay-1);
     // 가운데 점선은 교차로 칸에서 끊음
-    const noI=(a,b,L)=>{const o=[];let c=a;L.forEach(t=>{if(t+1<=c||t>=b)return;if(t-.15>c)o.push([c,t-.15]);c=t+1.15;});if(b>c)o.push([c,b]);return o;};
-    EX.forEach(x=>{const segs=rdSegs(x,'x',a0,ay);segs.forEach(([y0,y1])=>{noI(y0,y1,EY).forEach(([u,v])=>cl+=`M${G(...rotC(x+.5,u))}L${G(...rotC(x+.5,v))}`);
+    const noI=(a,b,L)=>{const o=[];let c=a;L.forEach(t=>{if(t+1.6<=c||t-.6>=b)return;if(t-.6>c)o.push([c,t-.6]);c=Math.max(c,t+1.6);});if(b>c)o.push([c,b]);return o.filter(([u,v])=>v-u>.25);};// 교차로 양옆 횡단보도 칸까지 점선 끊음
+    const EYs=new Set(EY),EXs=new Set(EX);EX.forEach(x=>{const segs=clip(rdSegs(x,'x',a0,ay),x,1);segs.forEach(([y0,y1])=>{for(let t=y0;t<y1;t++)if(ZN(x,t)==1)brg+=`<polygon class="brg" points="${Q([[x+RI-.12,t],[x+1-RI+.12,t],[x+1-RI+.12,t+1],[x+RI-.12,t+1]])}"/><path class="rail" d="M${G(...rotC(x+RI-.08,t))}L${G(...rotC(x+RI-.08,t+1))}M${G(...rotC(x+1-RI+.08,t))}L${G(...rotC(x+1-RI+.08,t+1))}"/>`;if(EYs.has(y0))y0+=RI;if(EYs.has(y1-1))y1-=RI;noI(y0,y1,EY).forEach(([u,v])=>cl+=`M${G(...rotC(x+.5,u))}L${G(...rotC(x+.5,v))}`);
       d+=`<polygon class="rds" points="${Q([[x+RI,y0],[x+1-RI,y0],[x+1-RI,y1],[x+RI,y1]])}"/><polygon class="sw" points="${Q([[x+RI,y0],[x+RI+.07,y0],[x+RI+.07,y1],[x+RI,y1]])}"/><polygon class="sw" points="${Q([[x+1-RI-.07,y0],[x+1-RI,y0],[x+1-RI,y1],[x+1-RI-.07,y1]])}"/>`;});});
-    EY.forEach(y=>{rdSegs(y,'y',a0,ax).forEach(([x0,x1])=>{noI(x0,x1,EX).forEach(([u,v])=>cl+=`M${G(...rotC(u,y+.5))}L${G(...rotC(v,y+.5))}`);
+    EY.forEach(y=>{clip(rdSegs(y,'y',a0,ax),y,0).forEach(([x0,x1])=>{for(let t=x0;t<x1;t++)if(ZN(t,y)==1)brg+=`<polygon class="brg" points="${Q([[t,y+RI-.12],[t+1,y+RI-.12],[t+1,y+1-RI+.12],[t,y+1-RI+.12]])}"/><path class="rail" d="M${G(...rotC(t,y+RI-.08))}L${G(...rotC(t+1,y+RI-.08))}M${G(...rotC(t,y+1-RI+.08))}L${G(...rotC(t+1,y+1-RI+.08))}"/>`;if(EXs.has(x0))x0+=RI;if(EXs.has(x1-1))x1-=RI;noI(x0,x1,EX).forEach(([u,v])=>cl+=`M${G(...rotC(u,y+.5))}L${G(...rotC(v,y+.5))}`);
       d+=`<polygon class="rds" points="${Q([[x0,y+RI],[x1,y+RI],[x1,y+1-RI],[x0,y+1-RI]])}"/><polygon class="sw" points="${Q([[x0,y+RI],[x1,y+RI],[x1,y+RI+.07],[x0,y+RI+.07]])}"/><polygon class="sw" points="${Q([[x0,y+1-RI-.07],[x1,y+1-RI-.07],[x1,y+1-RI],[x0,y+1-RI]])}"/>`;});});
     // 교차로 칸은 인도 지우기(길 색으로 덮음)
-    EX.forEach(x=>EY.forEach(y=>{if(!inMR(x,y))d+=`<polygon class="ix" points="${Q([[x+RI,y+RI],[x+1-RI,y+RI],[x+1-RI,y+1-RI],[x+RI,y+1-RI]])}"/>`;}));
+    EX.forEach(x=>EY.forEach(y=>{if(inMR(x,y)||!okR(x,y))return;d+=`<polygon class="ix" points="${Q([[x+RI,y+RI],[x+1-RI,y+RI],[x+1-RI,y+1-RI],[x+RI,y+1-RI]])}"/>`;
+      // 막힌 쪽(T자 교차로)은 인도 턱을 이어서 길이 끝난 게 아니라 꺾인 것처럼
+      const w=.07,A=RI,B=1-RI;const cov=(px,py,vert)=>vert?clip(rdSegs(px,'x',a0,ay),px,1).some(([u,v])=>py>=u&&py<v):clip(rdSegs(py,'y',a0,ax),py,0).some(([u,v])=>px>=u&&px<v);
+      if(!cov(x,y-1,1))d+=`<polygon class="sw" points="${Q([[x+A,y+A],[x+B,y+A],[x+B,y+A+w],[x+A,y+A+w]])}"/>`;
+      if(!cov(x,y+1,1))d+=`<polygon class="sw" points="${Q([[x+A,y+B-w],[x+B,y+B-w],[x+B,y+B],[x+A,y+B]])}"/>`;
+      if(!cov(x-1,y,0))d+=`<polygon class="sw" points="${Q([[x+A,y+A],[x+A+w,y+A],[x+A+w,y+B],[x+A,y+B]])}"/>`;
+      if(!cov(x+1,y,0))d+=`<polygon class="sw" points="${Q([[x+B-w,y+A],[x+B,y+A],[x+B,y+B],[x+B-w,y+B]])}"/>`;}));
     let z="";RDX.forEach(x=>RDY.forEach(y=>{if(x>=GX||y>=GY||inMR(x,y))return;
       [[0,-1],[0,1]].forEach(([_,dy])=>{const yy=y+dy;if(yy<0||yy>=GY||RDY.has(yy)||inPkY(x,yy))return;const y0=dy<0?yy+.55:yy+.08;for(let i=0;i<4;i++){const x0=x+RI+.06+i*.135;z+=`<polygon class="zb" points="${Q([[x0,y0],[x0+.08,y0],[x0+.08,y0+.37],[x0,y0+.37]])}"/>`;}});
       [[-1,0],[1,0]].forEach(([dx])=>{const xx=x+dx;if(xx<0||xx>=GX||RDX.has(xx)||inMR(xx,y))return;const x0=dx<0?xx+.55:xx+.08;for(let i=0;i<4;i++){const y0=y+RI+.06+i*.135;z+=`<polygon class="zb" points="${Q([[x0,y0],[x0+.37,y0],[x0+.37,y0+.08],[x0,y0+.08]])}"/>`;}});}));
@@ -321,25 +378,39 @@ function mkIso(root,cfg){
           +`<polygon class="tbs" points="${P([[bx+bw,by],[bx+bw+sd,by-sd*.5],[bx+bw+sd,by+bh-sd*.5],[bx+bw,by+bh]])}"/><polygon class="tbt" points="${P([[bx,by],[bx+sd,by-sd*.5],[bx+bw+sd,by-sd*.5],[bx+bw,by]])}"/><rect class="tbx" x="${bx}" y="${by}" width="${bw}" height="${bh}" rx="${.8*k}"/>`
           +["lr","ly","lg"].map((c,i)=>{const cy2=by+2.3*k+i*4.2*k;return `<circle class="${c}" cx="${px}" cy="${cy2}" r="${1.55*k}"/><path class="tvi" d="M${px-1.9*k} ${cy2-.2*k}a${1.9*k} ${1.9*k} 0 0 1 ${3.8*k} 0"/>`;}).join("")+`</g>`;DYN.push({o:qq[0]+qq[1]-1,y:py,s:tl1});});}));
     let al="";ALY.forEach(([x1,y1,x2,y2])=>{const v=x1==x2,w=.11;al+=`<polygon class="aly" points="${Q(v?[[x1-w,y1],[x1+w,y1],[x1+w,y2],[x1-w,y2]]:[[x1,y1-w],[x2,y1-w],[x2,y1+w],[x1,y1+w]])}"/>`;});
-    return al+d+`<path class="cl" d="${cl}"/>`+z+tl;}
+    let arc="";{const Hm=TW*.42;const run=(vert,f)=>{let t0=null;for(let t=a0;t<=(vert?ay:ax);t++){const w=t<(vert?ay:ax)&&(vert?ZN(f,t):ZN(t,f))==1;if(w&&t0==null)t0=t;if(!w&&t0!=null){const t1=t,L=t1-t0,n=Math.max(1,Math.round(L/3));
+        [RI-.1,1-RI+.1].forEach(e=>{let pa="",hg="";for(let k=0;k<=L*8;k++){const u=t0+k/8,q=vert?[f+e,u]:[u,f+e],[px,py]=G(...rotC(...q)),hh=Hm*Math.abs(Math.sin(Math.PI*n*(u-t0)/L));pa+=(k?"L":"M")+px.toFixed(1)+" "+(py-hh).toFixed(1);if(k%4==0&&k&&k<L*8)hg+=`M${px.toFixed(1)} ${py.toFixed(1)}V${(py-hh).toFixed(1)}`;}
+          arc+=`<path class="hng" d="${hg}"/><path class="arc" d="${pa}"/>`;});t0=null;}}};if(BB.x>=0)run(1,BB.x);if(BB.y>=0)run(0,BB.y);}
+    return brg+al+d+`<path class="cl" d="${cl}"/>`+z+tl+arc;}
+  function celebrate(id){const sc=root.querySelector(".scr"),el=bd.querySelector(`.hz[data-id="${id}"]`);if(!sc||!el)return;const r=el.getBoundingClientRect(),q=sc.getBoundingClientRect();if(r.width<2)return;
+    const fx=document.createElement("div");fx.className="vlg-fx";fx.style.left=(r.left-q.left+r.width/2)+"px";fx.style.top=(r.top-q.top+r.height*.35)+"px";
+    const C=["#f26935","#005b93","#ffdd50","#3fa143","#ff9bb3","#fff"];let h=`<div class="rb"><i class="l"></i><i class="r"></i><b></b></div>`;
+    for(let i=0;i<26;i++){const a=(i/26)*Math.PI*2+(i%3)*.3,d=46+(i*37%40);h+=`<span style="--x:${(Math.cos(a)*d).toFixed(0)}px;--y:${(Math.sin(a)*d*.7-30).toFixed(0)}px;--r:${(i*47)%360}deg;background:${C[i%C.length]};animation-delay:${(i%5)*20}ms"></span>`;}
+    fx.innerHTML=h;sc.appendChild(fx);setTimeout(()=>fx.remove(),2200);}
   function render(){v&&(v._rt=Date.now());
     setReg();fit();const SC=root.querySelector(".scr"),SW=SC.clientWidth,SH=SC.clientHeight,wlH=(root.querySelector("[data-wl]")||{}).offsetHeight||0;
-    {const pk=FM+"|"+R+"|"+Y;if(pk!==PK0){PAN={x:0,y:0};PK0=pk;}}PAD=Math.ceil((SW+SH*2+Math.abs(PAN.x)+Math.abs(PAN.y)*2)/TW)+Math.max(GX,GY)+2;setReg();
-    const Wd=W(),Hd=H();let tiles="",objs=[],wips=[],trees=[],parks=[],ghosts=[];
-    const cc=FM==null?null:[PL[FM].cell.x+PL[FM].cell.w/2,PL[FM].cell.y+PL[FM].cell.h/2],ctr=FM==null?(()=>{const b=bb();return [(b.x0+b.x1)/2*TW,((b.y0+b.y1)/2-.2)*TW];})():G(...rotC(...cc)),offX=SW/2-ctr[0]+PAN.x,offY=SH/2-ctr[1]+(FM==null?0:TW*.45)+PAN.y;
+    {const pk=FM+"|"+R+"|"+Y;if(pk!==PK0){PAN={x:0,y:0};PK0=pk;}}PAD=48;setReg();RSET=buildRS();{const b=bb(),m=TW*2.2,hw=(b.x1-b.x0)*TW/2,hh=(b.y1-b.y0)*TW/2;v._pl={x:Math.max(m,hw-SW/2+m),y:Math.max(m,hh-SH/2+m)};if(FM!=null){v._pl.x+=SW*.3;v._pl.y+=SH*.3;}PAN.x=Math.max(-v._pl.x,Math.min(v._pl.x,PAN.x));PAN.y=Math.max(-v._pl.y,Math.min(v._pl.y,PAN.y));}const BB=BRL(),ML=Math.max(SW,SH)*.6;let sea="",cliffs="";const LAY=[{c:"shn",lv:1.6,f:v=>v<1.6,d:""},{c:"shn",lv:RW0-1.6,f:v=>v>RW0-1.6,d:""},{c:"snd",lv:.95,f:v=>v<.95,d:""},{c:"snd",lv:RW0-.95,f:v=>v>RW0-.95,d:""},{c:"grn",lv:.45,f:v=>v<.45,d:""},{c:"grf",lv:RW0-.45,f:v=>v>RW0-.45,d:""}];const okR=(x,y)=>(x>=0&&y>=0&&x<GX&&y<GY)||RSET.has(x+","+y);
+    const Wd=W(),Hd=H();let sandE="",tiles="",objs=[],wips=[],trees=[],parks=[],ghosts=[];
+    const cc=FM==null?null:[PL[FM].cell.x+PL[FM].cell.w/2,PL[FM].cell.y+PL[FM].cell.h/2],ctr=FM==null?(()=>{const b=bb();return [(b.x0+b.x1)/2*TW,(b.y0+b.y1)/2*TW];})():G(...rotC(...cc)),offX=SW/2-ctr[0]+PAN.x,offY=(FM==null?TOPP+(SH-TOPP-WLH()-14)/2:SH/2+TW*.45)-ctr[1]+PAN.y;
     const occ={};J.filter(vis).forEach(j=>{const [x,y]=lotXY(j.m,j.lot);occ[x+","+y]=j;});
     for(let x=RX;x<RX+RW;x++)for(let y=RY;y<RY+RH;y++){
       const out=x<0||y<0||x>=GX||y>=GY,dst=out?Math.max(-x,-y,x-GX+1,y-GY+1):0;
-      const gRd=out&&((x<0||x>=GX)&&(x+100)%5==4||(y<0||y>=GY)&&(y+100)%5==4);
-      const ti=TI[x+","+y],road=!ti,isRd=(RDX.has(x)&&x<GX||RDY.has(y)&&y<GY)&&!inMR(x,y)||gRd,m=road?-1:ti.m,i=road?-1:ti.i;
-      const [rx,ry]=rot(x,y),[sx,sy]=scr(rx,ry);if((sx+offX<-TW||sx+offX>SW+TW||sy+offY<-TW*2||sy+offY>SH+TW))continue;
+      const gRd=out&&((x<0||x>=GX)&&(x+100)%5==4||(y<0||y>=GY)&&(y+100)%5==4)&&okR(x,y);
+      const ti=TI[x+","+y],road=!ti,isRd=(RDX.has(x)&&x<GX||RDY.has(y)&&y<GY)&&!inMR(x,y)&&okR(x,y)||gRd,m=road?-1:ti.m,i=road?-1:ti.i;
+      const [rx,ry]=rot(x,y),[sx,sy]=scr(rx,ry);if(sx+offX<-TW-ML||sx+offX>SW+TW+ML||sy+offY<-TW*2-ML||sy+offY>SH+TW+ML)continue;
+      const zn=out?ZN(x,y):0;
+      if(zn==1){const cell=(cx,cy,st)=>{const C=[[cx,cy],[cx+st,cy],[cx+st,cy+st],[cx,cy+st]],V=C.map(c=>FF(...c));
+          LAY.forEach(L=>{const inn=V.map(v=>L.f(v));if(!inn.some(Boolean))return;const pts=[];for(let k=0;k<4;k++){const k2=(k+1)%4;if(inn[k])pts.push(C[k]);if(inn[k]!=inn[k2]){const t=(L.lv-V[k])/(V[k2]-V[k]);pts.push([C[k][0]+(C[k2][0]-C[k][0])*t,C[k][1]+(C[k2][1]-C[k][1])*t]);}}
+            L.d+="M"+pts.map(q=>G(...rotC(...q)).map(n=>n.toFixed(1)).join(" ")).join("L")+"Z";});};
+        for(let a=0;a<2;a++)for(let b=0;b<2;b++)cell(x+a*.5,y+b*.5,.5);
+        const h=hsh((x+60)*17+(y+60)*31),fc=FF(x+.5,y+.5);if(h%6==0&&fc>1.7&&fc<RW0-1.7){const w=TW*.16,px=sx+((h>>2)%5-2)*TW*.08,py=sy+TH/2+((h>>5)%3-1)*TH*.15;sea+=`M${px-w} ${py}q${w/2} ${-w*.35} ${w} 0t${w} 0`;}continue;}
       const cm=CEL[x+","+y],fut=cm!=null&&cm>CM;
       const ln=LN[x+","+y],jj=occ[x+","+y],inR=q=>q&&x>=q.x&&x<q.x+q.w&&y>=q.y&&y<q.y+q.h,inPk=inR(PK)||GDN.some(inR);
-      tiles+=`<polygon class="tl${inPk?" pkg":ln?(fut?" fu":" ln"):road?(isRd?" rd":" gr"+(fut?" fu":"")):m>CM?" fu":jj&&jj.done?(jj.k=="o"?" pv":" yd"):m==CM?" cur":""}${out?" ou":""}"  ${cfg.tile?cfg.tile(m,road,x,y):""} data-m="${m}" data-i="${i}" points="${P([[sx,sy],[sx+TW/2,sy+TH/2],[sx,sy+TH],[sx-TW/2,sy+TH/2]])}"/>`;
+      tiles+=`<polygon class="tl${inPk?" pkg":ln?(fut?" fu":" ln"):road?(isRd?" rd":" gr"+(fut?" fu":"")):m>CM?" fu":jj&&jj.done?(jj.k=="o"?" pv":" yd"):m==CM?" cur":""}${out?" ou":""}${zn==2?" fb":""}"  ${cfg.tile?cfg.tile(m,road,x,y):""} data-m="${m}" data-i="${i}" points="${P([[sx,sy],[sx+TW/2,sy+TH/2],[sx,sy+TH],[sx-TW/2,sy+TH/2]])}"/>`;
       const j=occ[x+","+y];if(j)(j.done?objs:wips).push({o:rx+ry,j,cx:sx,cy:sy+TH/2});
       else if(inPk);
       else if(road&&!ln&&!isRd&&!fut&&!out&&hsh((x+9)*41+(y+9)*29)%7==0)parks.push({o:rx+ry,cx:sx,cy:sy+TH/2,v:hsh((x+9)*3+(y+9)*5)%4});
-      else if((out||EMP.some(inR))&&!isRd&&hsh((x+99)*37+(y+99)*11)%2==0)ghosts.push({o:rx+ry,cx:sx,cy:sy+TH/2,h:hsh((x+99)*5+(y+99)*7)});
+      else if((out||EMP.some(inR))&&!isRd&&hsh((x+99)*37+(y+99)*11)%(zn==2?5:2)==0)ghosts.push({o:rx+ry,cx:sx,cy:sy+TH/2,h:hsh((x+99)*5+(y+99)*7)});
       else if(road&&!ln&&!isRd&&!fut&&hsh((x+9)*31+(y+9)*17)%5<(out?1:2))trees.push({o:rx+ry,cx:sx,cy:sy+TH/2,v:hsh((x+9)*7+(y+9)*13)%3,op:1});}
     const c=[[0,0],[Wd,0],[Wd,Hd],[0,Hd]].map(([x,y])=>scr(x,y));
     objs.sort((a,b)=>a.o-b.o);
@@ -355,15 +426,30 @@ function mkIso(root,cfg){
         el.onclick=e=>{e.stopPropagation();closeAll();showPop(j,e.clientX,e.clientY);};
         el.oncontextmenu=e=>{e.preventDefault();e.stopPropagation();closeAll();showMenu(j,e.clientX,e.clientY);};
         el.onmouseenter=()=>{const l=lot();if(l)l.classList.add("on");};el.onmouseleave=()=>{const l=lot();if(l)l.classList.remove("on");};});}
-    let flags="",poles="";for(let m=0;m<12;m++){let bx=null;for(const [x,y] of PL[m].lots){const q=rot(x,y),[sx,sy]=scr(q[0],q[1]);if(!bx||sy<bx[1])bx=[sx,sy];}const f=cfg.flag(bx[0],bx[1]+4,m);poles+=f[0];flags+=f[1];}
+    let flags="",poles="";for(let m=0;m<12;m++){let bx=null;for(const [x,y] of PL[m].lots){const q=rot(x,y),[sx,sy]=scr(q[0],q[1]);if(!bx||sy<bx[1])bx=[sx,sy];}const f=cfg.flag(bx[0],bx[1]+4,m);poles+=f[0];flags+=f[1];
+}
     const vw=SW,vh=SH;
-    bd.innerHTML=`<svg width="${vw}" height="${vh}" style="color:var(--ink);--k:${(TW/58).toFixed(3)}"><g transform="translate(${offX},${offY})"><g class="tg">${tiles}</g>${traf}${poles}${wz}${hz}${flags}${wb}</g></svg>`;
+    const shore=LAY.map(L=>`<path class="${L.c}" d="${L.d}"/>`).join("")+`<path class="wave" d="${sea}"/>`;
+    const NGT=(()=>{let o=null;try{o=localStorage.getItem("vlgNight")}catch(_){}if(o=="1")return true;if(o=="0")return false;const h=new Date().getHours();return h>=19||h<6;})();root.classList.toggle("night",NGT);
+    const nightL=NGT?`<rect class="ngt" x="${-offX-4000}" y="${-offY-4000}" width="${SW+8000}" height="${SH+8000}"/><g class="glow">${hz0}${traf}</g>`:"";
+    bd.innerHTML=`<svg width="${vw}" height="${vh}" style="color:var(--ink);--k:${(TW/58).toFixed(3)}"><g transform="translate(${offX},${offY})">${shore}<g class="tg">${tiles}</g>${sandE}${traf}${poles}${wz}${hz}${nightL}${flags}${wb}</g></svg>`;
     // 확대·축소 이음: 새 그림을 옛 카메라 위치에서 시작해 부드럽게 다가감
     {const pc=v._cam,sv=bd.querySelector("svg");if(pc&&pc.fm!==FM&&pc.r===R&&sv&&!RM){const sc=TW/pc.tw,tx=pc.ox-offX/sc,ty=pc.oy-offY/sc;
       sv.style.transformOrigin="0 0";sv.style.transform=`translate(${tx}px,${ty}px) scale(${1/sc})`;sv.getBoundingClientRect();sv.style.transition="transform .45s cubic-bezier(.3,.7,.2,1)";sv.style.transform="none";}
      v._cam={ox:offX,oy:offY,tw:TW,fm:FM,r:R};}
     {const sc2=root.querySelector(".scr");v._sz=sc2.clientWidth+"x"+sc2.clientHeight;}
+    // 한 달 보기: 집마다 부동산 앱처럼 팻말(의뢰인·금액)
+    if(FM!=null){const G0=bd.querySelector("svg>g");let pins="",PS=[];const man=f=>f>=10000?Math.round(f/10000).toLocaleString("ko-KR")+"만":f?f.toLocaleString("ko-KR")+"원":"";
+      J.filter(j=>j.m==FM&&j.done&&vis(j)).forEach(j=>{const el=bd.querySelector(`.hz[data-id="${j.id}"]`);if(!el)return;let b;try{b=el.getBBox()}catch(_){return}if(!b.width)return;
+        const x=b.x+b.width/2,y=b.y-2;
+        PS.push([y,`<foreignObject class="pin" data-id="${j.id}" x="${(x-130).toFixed(1)}" y="${(y-110).toFixed(1)}" width="260" height="110"><div xmlns="http://www.w3.org/1999/xhtml" class="ptip">${j.im?`<img class="pth" data-k="${j.im}" alt=""/>`:""}<div class="ptx"><b>${j.cl}</b><span>${j.k=="c"?j.t:j.t+(j.pg?" · "+j.pg+"p":"")}</span><span>${j.m+1}월 ${j.d}일 완성 · ${won(j.fee)}</span></div></div></foreignObject>`]);});pins=PS.sort((a,b)=>a[0]-b[0]).map(x=>x[1]).join("");
+      if(G0&&pins){G0.insertAdjacentHTML("beforeend",`<g class="pins">${pins}</g>`);G0.querySelectorAll(".pins img.pth").forEach(im=>thumbURL(im.dataset.k).then(u=>{if(u)im.src=u;else im.remove();}));}}
+    // 완공 연출: 지난번에 못 본 새 완성 집에 리본이 끊기고 꽃가루가 터짐(한 번만)
+    {const KEY="vlgDoneSeen2",now=J.filter(j=>j.done).map(j=>j.uid);let seen=null;try{seen=JSON.parse(localStorage.getItem(KEY)||"null")}catch(_){}
+     if(seen&&!RM){const ss=new Set(seen),nw=J.filter(j=>j.done&&!ss.has(j.uid)).slice(-3);nw.forEach((j,n)=>setTimeout(()=>celebrate(j.id),250+n*500));}
+     try{localStorage.setItem(KEY,JSON.stringify([...new Set((seen||[]).concat(now))].slice(-3000)))}catch(_){}}
     root.classList.toggle("mon",FM!=null);
+    {const chk=()=>{const dk=root.querySelector(".desk");if(!dk||!document.body.contains(dk))return;const nh=Math.max(360,Math.round(innerHeight-dk.getBoundingClientRect().top-16));if(Math.abs(nh-(dk._h||0))>4)render();};if(!v._fx){v._fx=1;[60,300,900].forEach(t=>setTimeout(chk,t));setTimeout(()=>v._fx=0,950);}}
     bd.querySelectorAll(".hz").forEach(g=>bind(g,J.find(j=>j.id==+g.dataset.id)));
     const done=J.filter(j=>j.done&&!j.hid),nC=done.filter(j=>j.k=="c").length,nb=new Set(done.map(j=>j.cl)).size,sum=done.reduce((a,j)=>a+j.fee,0);
     const yt=root.querySelector("[data-yt]");if(yt)yt.innerHTML=FM==null?`${Y}`:`${Y}<em>${MN[FM]}</em>`;
@@ -407,6 +493,8 @@ function mkIso(root,cfg){
   }
   const v={render,zoom(z){TW=z;TH=z/2;render();},rotate(d){R=(R+d+4)%4;render();},nb(cl){nbCl=cl;render();say(`${cl}의 집 ${J.filter(j=>j.cl==cl&&j.done).length}채`,()=>{nbCl=null;render();});setTimeout(()=>{if(nbCl==cl){nbCl=null;render();}},4000);}};
   root.querySelectorAll("[data-rot]").forEach(b=>b.onclick=()=>v.rotate(+b.dataset.rot));
+  // 밤: 저녁 7시~아침 6시 자동, ☾ 버튼으로 바꿔 보기(이 기기에만 기억)
+  root.querySelectorAll("[data-night]").forEach(b=>b.onclick=()=>{const n=!root.classList.contains("night");try{localStorage.setItem("vlgNight",n?"1":"0")}catch(_){}render();});
   root.querySelectorAll("[data-y]").forEach(b=>b.onclick=()=>{const d=+b.dataset.y;closeAll();
     if(FM!=null){FM=Math.max(0,Math.min(11,FM+d));render();return;}
     const L=d<0?YRS.filter(y=>y<Y):YRS.filter(y=>y>Y);if(!L.length)return;Y=d<0?L[L.length-1]:L[0];CM=Y==Y0?CM0:Y<Y0?12:-1;cfg.rebuild();renderAll();});
@@ -417,7 +505,7 @@ function mkIso(root,cfg){
    const mv=e=>{if(!d0||e.pointerId!==d0.id)return;const dx=e.clientX-d0.x,dy=e.clientY-d0.y;if(!d0.mv){if(dx*dx+dy*dy<25)return;d0.mv=true;root.classList.add("pan");closeAll();try{sc.setPointerCapture(d0.id)}catch(_){}}
      const sv=bd.querySelector("svg");if(sv){sv.style.transition="none";sv.style.transform=`translate(${dx}px,${dy}px)`;}};
    const up=e=>{if(!d0||e.pointerId!==d0.id)return;const was=d0.mv,dx=e.clientX-d0.x,dy=e.clientY-d0.y;d0=null;root.classList.remove("pan");if(!was)return;eat=true;setTimeout(()=>eat=false,0);
-     const lim=Math.max(sc.clientWidth,sc.clientHeight);PAN={x:Math.max(-lim,Math.min(lim,PAN.x+dx)),y:Math.max(-lim,Math.min(lim,PAN.y+dy))};v._cam=null;render();};
+     const pl=v._pl||{x:200,y:200};PAN={x:Math.max(-pl.x,Math.min(pl.x,PAN.x+dx)),y:Math.max(-pl.y,Math.min(pl.y,PAN.y+dy))};v._cam=null;render();};
    sc.addEventListener("pointermove",mv);sc.addEventListener("pointerup",up);sc.addEventListener("pointercancel",up);
    sc.addEventListener("click",e=>{if(eat){e.stopPropagation();e.preventDefault();eat=false;}},true);}
   const esc=e=>{if(e.key=="Escape"&&FM!=null&&document.body.contains(root)){FM=null;closeAll();render();}};document.addEventListener("keydown",esc);
@@ -436,18 +524,18 @@ function Village(){
   const ref=H.useRef(null),comm=H.useStore(x=>x.comm),outs=H.useStore(x=>x.outs),cfg0=H.useStore(x=>x.commCfg),palK=H.useStore(x=>{const S=x.settings||{};return JSON.stringify([S.palKey,S.palCustom,S.palMix,S.palMixOrd,S.palMixPin])});
   const sig=H.useRef("");
   H.useEffect(()=>()=>{const el=ref.current;if(el)el.innerHTML="";sig.current="";closeAll&&closeAll();},[]);
-  H.useEffect(()=>{const el=ref.current;if(!el)return;const J2=build({comm,outs,commCfg:cfg0}),sg=JSON.stringify([J2.map(j=>[j.k,j.cl,j.t,j.fee,j.m,j.d,j.done,j.p,j.pg]),palK]);if(sg===sig.current&&el.firstChild)return;sig.current=sg;vUiInit();V=[];const S0={comm,outs,commCfg:cfg0};CFG.rebuild=()=>{J=build(S0);};J=build(S0);
+  H.useEffect(()=>{const el=ref.current;if(!el)return;vpApply(el);const J2=build({comm,outs,commCfg:cfg0}),sg=JSON.stringify([J2.map(j=>[j.k,j.cl,j.t,j.fee,j.m,j.d,j.done,j.p,j.pg]),palK]);if(sg===sig.current&&el.firstChild)return;sig.current=sg;vUiInit();V=[];const S0={comm,outs,commCfg:cfg0};CFG.rebuild=()=>{J=build(S0);};J=build(S0);
     el.innerHTML=MARKUP();const root=el;
     mkIso(root,CFG);renderAll();
     if(!J.length)root.querySelector("[data-stat]").innerHTML="<span>올해 끝낸 커미션·외주가 생기면 여기에 집이 지어져요</span>";
     },[comm,outs,cfg0,palK]);
-  return H.h("div",{ref,className:"vlg"+(MIFFY?" miffy":""),style:{height:"100%",overflow:"hidden"}});
+  return H.h("div",{ref,className:"vlg vp"+(MIFFY?" miffy":""),style:{height:"100%",overflow:"hidden"}});
 }
 const MARKUP=()=>`<div data-main><div class="vhead"><div class="yr"><button data-y="-1">‹</button><h2 data-yt></h2><button data-y="1">›</button></div><div class="fseg vm"><button data-vm="y" class="on">한 해</button><button data-vm="m">한 달</button></div>
         <i class="vsp"></i><div class="fseg" data-f><button class="on" data-k="all">전체</button><button data-k="c">커미션</button><button data-k="o">외주</button></div></div>
       <div class="stat" data-stat></div>
       <div class="desk"><div class="wl" data-wl></div><div class="scr"><div class="board" data-board></div></div>
-        <div class="ctl"><button data-rot="-1">↺</button><button data-rot="1">↻</button></div></div></div>`;
+        <div class="ctl"><button data-night title="밤">☾</button><button data-rot="-1">↺</button><button data-rot="1">↻</button></div></div></div>`;
 const CFG={depth:8,wip:"접는 중",
   base:(c,d)=>{const o=10;return `<polygon class="shad" points="${P(c.map(p=>[p[0]+o,p[1]+o+d]))}"/><polygon class="sheet2" points="${P([c[3],c[2],[c[2][0],c[2][1]+d],[c[3][0],c[3][1]+d]])}"/><polygon class="sheet2" points="${P([c[2],c[1],[c[1][0],c[1][1]+d],[c[2][0],c[2][1]+d]])}" style="filter:brightness(.93)"/>`;},
   flag:(x,y,m)=>{const w=m>8?48:40,H=34,c=m==CM?" now":"";return [`<g class="mpo${c}"><ellipse cx="${x}" cy="${y}" rx="5" ry="2.5"/><line x1="${x}" y1="${y}" x2="${x}" y2="${y-H}"/></g>`,`<g class="mlg${c}" transform="translate(${x},${y-H})"><line class="mpl" x1="0" y1="0" x2="0" y2="14"/><rect x="0" y="-2" width="${w}" height="24" rx="4"/><text x="${w/2}" y="14.5" text-anchor="middle">${MN[m]}</text></g>`]},

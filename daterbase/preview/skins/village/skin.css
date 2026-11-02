@@ -465,3 +465,164 @@ html body.sk-village .vlg.miffy .tl.yd:not(.rd):not(.gr):not(.fu):not(.cur){fill
 html body.sk-village .vlg.miffy .tl.pv:not(.rd):not(.gr):not(.fu):not(.cur){fill:#ffdd50}
 html body.sk-village .vlg.miffy .tl.ln:not(.rd):not(.gr):not(.fu):not(.cur){fill:#ffdd50}
 html body.sk-village .vlg.miffy .tl:not(.rd):not(.gr):not(.fu):not(.cur):not(.pkg):not(.yd):not(.pv):not(.ln){fill:#3d8f3a}
+/* 땅 초록 옅게 (나무·지붕 그대로) */
+html body.sk-village .vlg.miffy .tl.gr,html body.sk-village .vlg.miffy .tl.rd,html body.sk-village .vlg.miffy .tl.ou.gr,html body.sk-village .vlg.miffy .tl.rd.ou{fill:#7dbb68}
+html body.sk-village .vlg.miffy .tl.pkg:not(.rd):not(.gr):not(.fu):not(.cur){fill:#86c270}
+html body.sk-village .vlg.miffy .tl.yd:not(.rd):not(.gr):not(.fu):not(.cur),html body.sk-village .vlg.miffy .tl:not(.rd):not(.gr):not(.fu):not(.cur):not(.pkg):not(.yd):not(.pv):not(.ln),html body.sk-village .vlg.miffy .tl.cur{fill:#93c97c}
+html body.sk-village .vlg.miffy .pkg2,html body.sk-village .vlg.miffy .bpk{fill:#93c97c}
+html body.sk-village .vlg.miffy .gh polygon{stroke:#76b462!important}
+html body.sk-village .vlg.miffy .gh .lf,html body.sk-village .vlg.miffy .gh .rt{fill:#86c270!important}
+html body.sk-village .vlg.miffy .gh .rf{fill:#8fc77a!important}
+html body.sk-village .vlg.miffy .trc{fill:#2f8a36}
+html body.sk-village .vlg.miffy{--gg:#9dcf86;--gh:#7fbb69}
+/* 흐린 동네: 전처럼 하얗게 비치는 흐린 색 / 나무 선 없음 */
+html body.sk-village .vlg.miffy{--gg:color-mix(in srgb,#7dbb68 40%,#fff);--gh:color-mix(in srgb,#5f9a45 28%,var(--gg))}
+html body.sk-village .vlg.miffy .gh polygon{stroke:color-mix(in srgb,#5f9a45 22%,var(--gg))!important}
+html body.sk-village .vlg.miffy .gh .lf{fill:color-mix(in srgb,#fff 70%,var(--gg))!important}
+html body.sk-village .vlg.miffy .gh .rt{fill:color-mix(in srgb,#fff 45%,var(--gg))!important}
+html body.sk-village .vlg.miffy .gh .rf{fill:var(--gh)!important}
+html body.sk-village .vlg.miffy .trc,html body.sk-village .vlg.miffy .trc.b2,html body.sk-village .vlg.miffy .trk{stroke:none!important}
+html body.sk-village .vlg.miffy .car *{stroke:none!important}
+/* 땅도 전처럼 하얗게 비치게: 바깥으로 갈수록 흐림 + 옅은 흰 줄 */
+html body.sk-village .vlg.miffy .tl.gr,html body.sk-village .vlg.miffy .tl.rd{fill:color-mix(in srgb,#7dbb68 72%,#fff)}
+html body.sk-village .vlg.miffy .tl.ou.gr,html body.sk-village .vlg.miffy .tl.rd.ou{fill:color-mix(in srgb,#7dbb68 50%,#fff)}
+html body.sk-village .vlg.miffy .tl.pkg:not(.rd):not(.gr):not(.fu):not(.cur){fill:color-mix(in srgb,#86c270 72%,#fff)}
+html body.sk-village .vlg.miffy .tl.yd:not(.rd):not(.gr):not(.fu):not(.cur),html body.sk-village .vlg.miffy .tl:not(.rd):not(.gr):not(.fu):not(.cur):not(.pkg):not(.yd):not(.pv):not(.ln),html body.sk-village .vlg.miffy .tl.cur{fill:color-mix(in srgb,#93c97c 68%,#fff)}
+html body.sk-village .vlg.miffy .pkg2,html body.sk-village .vlg.miffy .bpk{fill:color-mix(in srgb,#93c97c 68%,#fff)}
+html body.sk-village .vlg.miffy .tl{stroke:color-mix(in srgb,#fff 40%,transparent);stroke-width:.6}
+html body.sk-village .vlg.miffy .rds,html body.sk-village .vlg.miffy .ix{fill:color-mix(in srgb,#005b93 55%,#fff)}
+html body.sk-village .vlg.miffy .sw{fill:color-mix(in srgb,#fff 85%,#7dbb68)}
+/* 길 이음새 틈 메우기 */
+html body.sk-village .vlg.miffy .rds,html body.sk-village .vlg.miffy .ix{stroke:color-mix(in srgb,#005b93 55%,#fff);stroke-width:1;stroke-linejoin:round}
+
+/* 강: 마을 둘레 밖은 물 */
+html body.sk-village .vlg .scr{background:color-mix(in srgb,#5aa9d6 42%,#fff)}
+html body.sk-village .vlg .wave{fill:none;stroke:#fff;stroke-width:calc(.8px + var(--k,1)*.6px);stroke-linecap:round;opacity:.7}
+html body.sk-village .vlg .cliff{fill:color-mix(in srgb,#b98b5e 70%,#fff)}
+html body.sk-village .vlg .cliff2{fill:color-mix(in srgb,#a87a4f 75%,#fff)}
+html body.sk-village .vlg .sand{fill:none;stroke:color-mix(in srgb,#f1dfa8 85%,#fff);stroke-width:calc(2px + var(--k,1)*3px);stroke-linejoin:round}
+
+/* 들쭉날쭉 해안 + 건너편 땅 + 다리 */
+html body.sk-village .vlg .sand2{fill:color-mix(in srgb,#f1dfa8 80%,#fff)}
+html body.sk-village .vlg .brg{fill:color-mix(in srgb,#cfc8bb 70%,#fff);stroke:color-mix(in srgb,#9c9588 50%,#fff);stroke-width:.6}
+html body.sk-village .vlg .rail{fill:none;stroke:color-mix(in srgb,#8d867a 60%,#fff);stroke-width:calc(.8px + var(--k,1)*.6px)}
+html body.sk-village .vlg.miffy .tl.fb{fill:color-mix(in srgb,#7dbb68 45%,#fff)!important}
+html body.sk-village .vlg .board{padding:0!important}
+
+/* 빌드잇식 강: 가운데 진한 물, 물가 옅은 물, 모래사장, 매끈한 풀 가장자리, 아치 다리 */
+html body.sk-village .vlg .scr{background:color-mix(in srgb,#3f8fd0 62%,#fff)}
+html body.sk-village .vlg .shn{fill:color-mix(in srgb,#6cc3e0 55%,#fff);stroke:color-mix(in srgb,#6cc3e0 55%,#fff);stroke-width:.6}
+html body.sk-village .vlg .snd{fill:color-mix(in srgb,#f4dc9a 75%,#fff);stroke:color-mix(in srgb,#f4dc9a 75%,#fff);stroke-width:.6}
+html body.sk-village .vlg .grn{fill:color-mix(in srgb,#7dbb68 50%,#fff);stroke:color-mix(in srgb,#7dbb68 50%,#fff);stroke-width:.6}
+html body.sk-village .vlg .grf{fill:color-mix(in srgb,#7dbb68 45%,#fff);stroke:color-mix(in srgb,#7dbb68 45%,#fff);stroke-width:.6}
+html body.sk-village .vlg .arc{fill:none;stroke:color-mix(in srgb,#f26935 80%,#fff);stroke-width:calc(1.4px + var(--k,1)*1.6px);stroke-linecap:round;stroke-linejoin:round}
+html body.sk-village .vlg .hng{fill:none;stroke:color-mix(in srgb,#f26935 60%,#fff);stroke-width:calc(.5px + var(--k,1)*.4px)}
+html body.sk-village .vlg .wave{opacity:.55}
+html body.sk-village .vlg .wave{display:none}
+
+/* 밤: 전체를 남색으로 눌러 어둡게(multiply) + 창문·가로등만 다시 켬(screen, 앞집이 뒷집 창문을 가림) */
+html body.sk-village .vlg.night .scr{background:color-mix(in srgb,#3f8fd0 40%,#1b2547)}
+html body.sk-village .vlg .ngt{fill:#28306a;opacity:.62;mix-blend-mode:multiply;pointer-events:none}
+html body.sk-village .vlg .glow{mix-blend-mode:screen;pointer-events:none}
+html body.sk-village .vlg.vlg.vlg .glow.glow *{fill:#000!important;stroke:#000!important;filter:none!important;opacity:1!important}
+html body.sk-village .vlg.vlg.vlg .glow.glow .w,html body.sk-village .vlg.vlg.vlg .glow.glow rect.w{fill:#ffd27a!important;stroke:#ffcf6a!important;stroke-width:1.2px!important}
+html body.sk-village .vlg.vlg.vlg .glow.glow .gh .w{fill:#9c7a3c!important;stroke:none!important}
+html body.sk-village .vlg.vlg.vlg .glow.glow .lpb{fill:#fff1b8!important;stroke:#ffe9a0!important;stroke-width:3px!important}
+html body.sk-village .vlg.vlg.vlg .glow.glow .tlt circle{fill:#555!important}
+html body.sk-village .vlg.night .ctl [data-night]{background:#2b335c;color:#ffe08a}
+/* 완공 연출 */
+html body.sk-village .vlg .vlg-fx{position:absolute;width:0;height:0;pointer-events:none;z-index:7}
+html body.sk-village .vlg .vlg-fx span{position:absolute;left:-3px;top:-4px;width:6px;height:9px;border-radius:1.5px;opacity:0;animation:vlgCf 1.6s cubic-bezier(.2,.7,.3,1) forwards}
+@keyframes vlgCf{0%{opacity:1;transform:translate(0,0) rotate(0)}70%{opacity:1}100%{opacity:0;transform:translate(var(--x),calc(var(--y) + 60px)) rotate(calc(var(--r) + 540deg))}}
+html body.sk-village .vlg .vlg-fx .rb{position:absolute;left:-34px;top:-6px;width:68px;height:10px}
+html body.sk-village .vlg .vlg-fx .rb i{position:absolute;top:2px;width:34px;height:6px;background:#e8473a;border-radius:2px;box-shadow:0 1px 0 rgba(0,0,0,.12)}
+html body.sk-village .vlg .vlg-fx .rb i.l{left:0;transform-origin:0 50%;animation:vlgRl 1.4s .35s ease-in forwards}
+html body.sk-village .vlg .vlg-fx .rb i.r{right:0;transform-origin:100% 50%;animation:vlgRr 1.4s .35s ease-in forwards}
+html body.sk-village .vlg .vlg-fx .rb b{position:absolute;left:26px;top:-5px;width:16px;height:16px;border-radius:50%;background:radial-gradient(circle,#ff6b5c 35%,#e8473a 36%);animation:vlgBw 1.5s .3s ease-in forwards}
+@keyframes vlgRl{0%{transform:none}25%{transform:rotate(-8deg)}100%{transform:translateY(40px) rotate(-70deg);opacity:0}}
+@keyframes vlgRr{0%{transform:none}25%{transform:rotate(8deg)}100%{transform:translateY(40px) rotate(70deg);opacity:0}}
+@keyframes vlgBw{0%{transform:scale(1)}20%{transform:scale(1.4)}100%{transform:translateY(-30px) scale(.2);opacity:0}}
+
+/* 한 달 보기 요약 카드 (안 씀) */
+html body.sk-village .vlg .minfo{pointer-events:none}
+html body.sk-village .vlg .minfo rect{fill:var(--fg);opacity:.92;filter:drop-shadow(0 4px 10px rgba(0,0,0,.18))}
+html body.sk-village .vlg .minfo text{fill:var(--bg);font-size:12.5px}
+html body.sk-village .vlg .minfo text.b{font-weight:700;font-size:13.5px}
+/* 그림자: 둥근 얼룩 그림자 빼고 납작하게 */
+html body.sk-village .vlg.miffy .hsh,html body.sk-village .vlg.miffy .trs,html body.sk-village .vlg.miffy .crs,html body.sk-village .vlg.miffy .bsh,html body.sk-village .vlg.miffy .nsh,html body.sk-village .vlg.miffy .shad{display:none}
+
+/* 한 달 보기: 집마다 세운 팻말 */
+html body.sk-village .vlg .pins{pointer-events:none}
+html body.sk-village .vlg .pin rect{fill:#fff;stroke:var(--pc,#555);stroke-width:2;filter:drop-shadow(0 2px 4px rgba(0,0,0,.15))}
+html body.sk-village .vlg .pin .pp{stroke:#6b6b6b;stroke-width:1.6}
+html body.sk-village .vlg .pin text{font-size:11.5px;fill:#222}
+html body.sk-village .vlg .pin .n{font-weight:700}
+html body.sk-village .vlg .pin .p{fill:#e2552d;font-weight:700}
+
+/* 선 = 짙은 회색 */
+html body.sk-village .vlg.miffy{--ink2:#4d4a46;--ink:#4d4a46}
+html body.sk-village .vlg.miffy .hz polygon,html body.sk-village .vlg.miffy .hz path,html body.sk-village .vlg.miffy .hz rect{stroke:#4d4a46}
+/* 전개도: 면 테두리 없음, 바깥 자르는 선 실선, 접는 선 점선 */
+html body.sk-village .vlg .nt .pn,html body.sk-village .vlg .nt .pn.on{stroke:none!important}
+html body.sk-village .vlg .nt .outl{fill:none;stroke:#4d4a46;stroke-width:1.3;stroke-linejoin:round}
+html body.sk-village .vlg .nt .fold{fill:none;stroke:#4d4a46;stroke-width:1.1;stroke-dasharray:3 2.5;opacity:.85}
+
+/* 한 달 보기: 집마다 마우스 정보창과 같은 카드 */
+html body.sk-village .vlg .pin{overflow:visible;pointer-events:none}
+html body.sk-village .vlg .pin .ptip{position:absolute;left:50%;bottom:7px;transform:translateX(-50%);display:flex;align-items:center;gap:7px;background:var(--fg);color:var(--bg);border-radius:7px;padding:5px 9px;font-size:10.5px;line-height:1.4;white-space:nowrap;box-shadow:0 3px 10px rgba(0,0,0,.18)}
+html body.sk-village .vlg .pin .ptip::after{content:"";position:absolute;left:50%;bottom:-5px;margin-left:-5px;border:5px solid transparent;border-bottom:0;border-top-color:var(--fg)}
+html body.sk-village .vlg .pin .ptip b{font-size:11.5px;font-weight:700}
+html body.sk-village .vlg .pin .ptip span{opacity:.82}
+html body.sk-village .vlg .pin .ptx{display:flex;flex-direction:column;gap:1px}
+html body.sk-village .vlg .pin .pth{width:30px;height:30px;border-radius:5px;object-fit:cover;flex:none;background:rgba(255,255,255,.15)}
+html body.sk-village .vlg .pin .pth:not([src]){display:none}
+
+/* ===== 테마 따라가는 마을 색 (.vp, 변수는 skin.js vpApply) ===== */
+html body.sk-village .vlg.miffy.vp{--ink2:var(--vInk);--ink:var(--vInk);--gg:color-mix(in srgb,var(--vG) 40%,var(--vM));--gh:color-mix(in srgb,var(--vT) 22%,var(--gg))}
+html body.sk-village .vlg.miffy.vp .tl.gr,html body.sk-village .vlg.miffy.vp .tl.rd{fill:color-mix(in srgb,var(--vG) 72%,var(--vM))}
+html body.sk-village .vlg.miffy.vp .tl.ou.gr,html body.sk-village .vlg.miffy.vp .tl.rd.ou{fill:color-mix(in srgb,var(--vG) 50%,var(--vM))}
+html body.sk-village .vlg.miffy.vp .tl.pkg:not(.rd):not(.gr):not(.fu):not(.cur){fill:color-mix(in srgb,var(--vPk) 72%,var(--vM))}
+html body.sk-village .vlg.miffy.vp .tl.yd:not(.rd):not(.gr):not(.fu):not(.cur),html body.sk-village .vlg.miffy.vp .tl:not(.rd):not(.gr):not(.fu):not(.cur):not(.pkg):not(.yd):not(.pv):not(.ln),html body.sk-village .vlg.miffy.vp .tl.cur{fill:color-mix(in srgb,var(--vG2) 68%,var(--vM))}
+html body.sk-village .vlg.miffy.vp .pkg2,html body.sk-village .vlg.miffy.vp .bpk{fill:color-mix(in srgb,var(--vG2) 68%,var(--vM))}
+html body.sk-village .vlg.miffy.vp .tl.pv:not(.rd):not(.gr):not(.fu):not(.cur),html body.sk-village .vlg.miffy.vp .tl.ln:not(.rd):not(.gr):not(.fu):not(.cur),html body.sk-village .vlg.miffy.vp .tl.fu,html body.sk-village .vlg.miffy.vp .tl.gr.fu,html body.sk-village .vlg.miffy.vp .aly,html body.sk-village .vlg.miffy.vp .plz,html body.sk-village .vlg.miffy.vp .bpk-path{fill:var(--vL)}
+html body.sk-village .vlg.miffy.vp path.pth{stroke:var(--vL)}
+html body.sk-village .vlg.miffy.vp .tl.fb{fill:color-mix(in srgb,var(--vG) 45%,var(--vM))!important}
+html body.sk-village .vlg.miffy.vp .tl{stroke:color-mix(in srgb,var(--vM) 40%,transparent)}
+html body.sk-village .vlg.miffy.vp .rds,html body.sk-village .vlg.miffy.vp .ix{fill:color-mix(in srgb,var(--vR) 55%,var(--vM));stroke:color-mix(in srgb,var(--vR) 55%,var(--vM))}
+html body.sk-village .vlg.miffy.vp .sw{fill:color-mix(in srgb,var(--vM) 85%,var(--vG))}
+html body.sk-village .vlg.miffy.vp .scr{background:color-mix(in srgb,var(--vW) 62%,var(--vM))}
+html body.sk-village .vlg.miffy.vp.night .scr{background:color-mix(in srgb,var(--vW) 40%,#1b2547)}
+html body.sk-village .vlg.miffy.vp .shn{fill:color-mix(in srgb,var(--vS) 55%,var(--vM));stroke:color-mix(in srgb,var(--vS) 55%,var(--vM))}
+html body.sk-village .vlg.miffy.vp .snd{fill:color-mix(in srgb,var(--vSd) 75%,var(--vM));stroke:color-mix(in srgb,var(--vSd) 75%,var(--vM))}
+html body.sk-village .vlg.miffy.vp .grn{fill:color-mix(in srgb,var(--vG) 50%,var(--vM));stroke:color-mix(in srgb,var(--vG) 50%,var(--vM))}
+html body.sk-village .vlg.miffy.vp .grf{fill:color-mix(in srgb,var(--vG) 45%,var(--vM));stroke:color-mix(in srgb,var(--vG) 45%,var(--vM))}
+html body.sk-village .vlg.miffy.vp .arc{stroke:color-mix(in srgb,var(--vA) 80%,var(--vM))}
+html body.sk-village .vlg.miffy.vp .hng{stroke:color-mix(in srgb,var(--vA) 60%,var(--vM))}
+html body.sk-village .vlg.miffy.vp .trc{fill:var(--vT)}
+html body.sk-village .vlg.miffy.vp .trc.b2{fill:var(--vT2)}
+html body.sk-village .vlg.miffy.vp .trk{fill:var(--vK)}
+html body.sk-village .vlg.miffy.vp .bn,html body.sk-village .vlg.miffy.vp .bn.bnb,html body.sk-village .vlg.miffy.vp .bn.bnf{fill:var(--vBn)}
+html body.sk-village .vlg.miffy.vp svg .w{fill:var(--vWin)}
+html body.sk-village .vlg.miffy.vp .hz .lf,html body.sk-village .vlg.miffy.vp .hz .rt{fill:var(--vWall)}
+html body.sk-village .vlg.miffy.vp .hz polygon,html body.sk-village .vlg.miffy.vp .hz path,html body.sk-village .vlg.miffy.vp .hz rect{stroke:var(--vInk)}
+html body.sk-village .vlg.miffy.vp .gh polygon{stroke:color-mix(in srgb,var(--vT) 22%,var(--gg))!important}
+html body.sk-village .vlg.miffy.vp .gh .lf{fill:color-mix(in srgb,var(--vM) 70%,var(--gg))!important}
+html body.sk-village .vlg.miffy.vp .gh .rt{fill:color-mix(in srgb,var(--vM) 45%,var(--gg))!important}
+html body.sk-village .vlg.miffy.vp .gh .rf{fill:var(--gh)!important}
+html body.sk-village .vlg.vp .nt .outl,html body.sk-village .vlg.vp .nt .fold{stroke:var(--vInk)}
+/* 밤: 더미 집도 같이 어둡게 (테마 색 규칙보다 우선) */
+html body.sk-village .vlg.vlg.vlg.vlg.vlg .glow.glow.glow *{fill:#000!important;stroke:#000!important}
+html body.sk-village .vlg.vlg.vlg.vlg.vlg .glow.glow.glow .w,html body.sk-village .vlg.vlg.vlg.vlg.vlg .glow.glow.glow rect.w{fill:#ffd27a!important;stroke:#ffcf6a!important}
+html body.sk-village .vlg.vlg.vlg.vlg.vlg .glow.glow.glow .gh .w{fill:#9c7a3c!important;stroke:none!important}
+html body.sk-village .vlg.vlg.vlg.vlg.vlg .glow.glow.glow .lpb{fill:#fff1b8!important;stroke:#ffe9a0!important}
+html body.sk-village .vlg.vlg.vlg.vlg.vlg .glow.glow.glow .tlt circle{fill:#555!important;stroke:#000!important}
+/* 밤: 불빛 층에서 길 바닥(도로·인도·차선·골목·횡단보도)은 빼기 — 위에 덮여 높은 건물 창문이 꺼져 보였음 */
+html body.sk-village .vlg .glow .trf .rds,html body.sk-village .vlg .glow .trf .sw,html body.sk-village .vlg .glow .trf .cl,html body.sk-village .vlg .glow .trf .ix,html body.sk-village .vlg .glow .trf .aly,html body.sk-village .vlg .glow .trf .zb{display:none!important}
+/* 실험 파일철: 노랑·코발트 더 진하게 */
+html body.sk-village .vlg.miffy.vp[data-vp="folder"] .rds,html body.sk-village .vlg.miffy.vp[data-vp="folder"] .ix{fill:color-mix(in srgb,var(--vR) 82%,var(--vM));stroke:color-mix(in srgb,var(--vR) 82%,var(--vM))}
+html body.sk-village .vlg.miffy.vp[data-vp="folder"] .scr{background:color-mix(in srgb,var(--vW) 88%,var(--vM))}
+html body.sk-village .vlg.miffy.vp[data-vp="folder"] .shn{fill:color-mix(in srgb,var(--vS) 75%,var(--vM));stroke:color-mix(in srgb,var(--vS) 75%,var(--vM))}
+html body.sk-village .vlg.miffy.vp[data-vp="folder"] .tl.gr,html body.sk-village .vlg.miffy.vp[data-vp="folder"] .tl.rd{fill:color-mix(in srgb,var(--vG) 88%,var(--vM))}
+html body.sk-village .vlg.miffy.vp[data-vp="folder"] .tl.ou.gr,html body.sk-village .vlg.miffy.vp[data-vp="folder"] .tl.rd.ou{fill:color-mix(in srgb,var(--vG) 72%,var(--vM))}
+/* 실험 파일철: 빌딩 창문만 흰색 */
+html body.sk-village .vlg.miffy.vp[data-vp="folder"] svg .w.bw{fill:#fff}

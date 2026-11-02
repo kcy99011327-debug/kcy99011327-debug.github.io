@@ -94,6 +94,6 @@ const url="https://api.github.com/repos/"+GH.o+"/"+GH.r+"/contents/"+GH.p,h={Aut
 const g=await fetch(url+"?ref="+GH.b,{headers:h,cache:"no-store"});if(g.status===401){try{localStorage.removeItem("dbg_gh")}catch(_){}throw Error("토큰이 맞지 않아요. 주소 끝에 #edit 를 붙여 다시 넣어 주세요")}if(!g.ok)throw Error("불러오기 "+g.status);const j=await g.json();
 const src=new TextDecoder().decode(Uint8Array.from(atob(j.content.replace(/\s/g,"")),c=>c.charCodeAt(0)));const n=src.split("\n").filter(x=>x.startsWith("const P={")).length;if(n!==1)throw Error("페이지 구조가 달라요");
 const out=src.split("\n").map(x=>x.startsWith("const P={")?line:x).join("\n");
-const r=await fetch(url,{method:"PUT",headers:h,body:JSON.stringify({message:"guide: 페이지에서 수정",content:u8b64(new TextEncoder().encode(out)),sha:j.sha,branch:GH.b})});if(!r.ok)throw Error(r.status===409?"다른 곳에서 먼저 바뀌었어요. 새로고침 후 다시":"저장 "+r.status)}
+const r=await fetch(url,{method:"PUT",headers:h,body:JSON.stringify({message:"guide: 페이지에서 수정",author:{name:"Daterbase",email:"noreply@daterbase.net"},committer:{name:"Daterbase",email:"noreply@daterbase.net"},content:u8b64(new TextEncoder().encode(out)),sha:j.sha,branch:GH.b})});if(!r.ok)throw Error(r.status===409?"다른 곳에서 먼저 바뀌었어요. 새로고침 후 다시":"저장 "+r.status)}
 </script>
 </body></html>

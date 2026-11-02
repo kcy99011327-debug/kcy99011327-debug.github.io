@@ -626,3 +626,5 @@ html body.sk-village .vlg.miffy.vp[data-vp="folder"] .tl.gr,html body.sk-village
 html body.sk-village .vlg.miffy.vp[data-vp="folder"] .tl.ou.gr,html body.sk-village .vlg.miffy.vp[data-vp="folder"] .tl.rd.ou{fill:color-mix(in srgb,var(--vG) 72%,var(--vM))}
 /* 실험 파일철: 빌딩 창문만 흰색 */
 html body.sk-village .vlg.miffy.vp[data-vp="folder"] svg .w.bw{fill:#fff}
+/* 아직 안 온 달: 큰 노란 판 대신 옅은 빈 땅 + 칸 선이 보이게 */
+html body.sk-village .vlg.miffy.vp .tl.fu,html body.sk-village .vlg.miffy.vp .tl.gr.fu{fill:color-mix(in srgb,var(--vSd) 38%,var(--vM));stroke:color-mix(in srgb,var(--vSd) 70%,var(--vInk) 12%);stroke-width:.7}

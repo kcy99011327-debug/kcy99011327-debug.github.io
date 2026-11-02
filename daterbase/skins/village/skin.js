@@ -248,7 +248,7 @@ function mkIso(root,cfg){
   const rot=(x,y)=>{x-=RX;y-=RY;return R==0?[x,y]:R==1?[RH-1-y,x]:R==2?[RW-1-x,RH-1-y]:[y,RW-1-x]};
   const W=()=>R%2?RH:RW,H=()=>R%2?RW:RH,scr=(x,y)=>[(x-y)*TW/2,(x+y)*TH/2];
   // 한 해 보기: 달 블록들이 차지하는 화면 범위(TW 단위). 이 범위가 화면을 꽉 채우게 맞춤
-  const bb=()=>{let x0=1e9,x1=-1e9,y0=1e9,y1=-1e9;PL.forEach(q=>{const c=q.cell;[[c.x,c.y],[c.x+c.w,c.y],[c.x,c.y+c.h],[c.x+c.w,c.y+c.h]].forEach(([u,v])=>{const [a,b]=rotC(u,v),X=(a-b)/2,Y=(a+b)/4;x0=Math.min(x0,X);x1=Math.max(x1,X);y0=Math.min(y0,Y);y1=Math.max(y1,Y);});});return {x0:x0-.25,x1:x1+.25,y0:y0-.1,y1:y1+.15};};const WLH=()=>{const w=root.querySelector("[data-wl]");return w&&w.children.length>1?w.offsetHeight:0;},TOPP=58;
+  const bb=()=>{let x0=1e9,x1=-1e9,y0=1e9,y1=-1e9;PL.forEach(q=>{const c=q.cell;[[c.x,c.y],[c.x+c.w,c.y],[c.x,c.y+c.h],[c.x+c.w,c.y+c.h]].forEach(([u,v])=>{const [a,b]=rotC(u,v),X=(a-b)/2,Y=(a+b)/4;x0=Math.min(x0,X);x1=Math.max(x1,X);y0=Math.min(y0,Y);y1=Math.max(y1,Y);});});return {x0:x0-.25,x1:x1+.25,y0:y0-.1,y1:y1+.15};};const WLH=()=>{const w=root.querySelector("[data-wl]");const h=w&&w.children.length>1?w.offsetHeight:0;v._wlUsed=h;return h;},TOPP=58;
   const fit=()=>{const sc=root.querySelector(".scr");if(!sc)return;const dk=root.querySelector(".desk"),t=dk.getBoundingClientRect().top+(document.scrollingElement||{}).scrollTop||0;{const nh=Math.max(360,Math.round(innerHeight-dk.getBoundingClientRect().top-16));if(Math.abs(nh-(dk._h||0))>4){dk._h=nh;dk.style.height=nh+"px";}}const n=FM==null?(GX+GY)/2*.95:(PL[FM].cell.w+PL[FM].cell.h)/2+1.2,aw=sc.clientWidth-60,wlE=root.querySelector("[data-wl]"),ah=sc.clientHeight-40-(wlE&&wlE.offsetHeight&&FM==null?wlE.offsetHeight+8:0);
     // 높이: 땅(n*TW/2) + 위 여유(건물·팻말 ≈ 1.6TW) + 두께
     if(FM==null){const b=bb();TW=Math.max(24,Math.min((sc.clientWidth-40)/(b.x1-b.x0),(sc.clientHeight-TOPP-WLH()-14)/(b.y1-b.y0),200));}else TW=Math.max(30,Math.min(aw/n,(ah-cfg.depth-20)/(n/2+1.7),240));TH=TW/2;};
@@ -389,7 +389,7 @@ function mkIso(root,cfg){
     fx.innerHTML=h;sc.appendChild(fx);setTimeout(()=>fx.remove(),2200);}
   function render(){v&&(v._rt=Date.now());
     setReg();fit();const SC=root.querySelector(".scr"),SW=SC.clientWidth,SH=SC.clientHeight,wlH=(root.querySelector("[data-wl]")||{}).offsetHeight||0;
-    {const pk=FM+"|"+R+"|"+Y;if(pk!==PK0){PAN={x:0,y:0};PK0=pk;}}PAD=48;setReg();RSET=buildRS();{const b=bb(),m=TW*2.2,hw=(b.x1-b.x0)*TW/2,hh=(b.y1-b.y0)*TW/2;v._pl={x:Math.max(m,hw-SW/2+m),y:Math.max(m,hh-SH/2+m)};if(FM!=null){v._pl.x+=SW*.3;v._pl.y+=SH*.3;}PAN.x=Math.max(-v._pl.x,Math.min(v._pl.x,PAN.x));PAN.y=Math.max(-v._pl.y,Math.min(v._pl.y,PAN.y));}const BB=BRL(),ML=Math.max(SW,SH)*.6;let sea="",cliffs="";const LAY=[{c:"shn",lv:1.6,f:v=>v<1.6,d:""},{c:"shn",lv:RW0-1.6,f:v=>v>RW0-1.6,d:""},{c:"snd",lv:.95,f:v=>v<.95,d:""},{c:"snd",lv:RW0-.95,f:v=>v>RW0-.95,d:""},{c:"grn",lv:.45,f:v=>v<.45,d:""},{c:"grf",lv:RW0-.45,f:v=>v>RW0-.45,d:""}];const okR=(x,y)=>(x>=0&&y>=0&&x<GX&&y<GY)||RSET.has(x+","+y);
+    {const pk=FM+"|"+R+"|"+Y;if(pk!==PK0){PAN={x:0,y:0};PK0=pk;}}PAD=48;setReg();RSET=buildRS();{const b=bb(),m=TW*2.2,hw=(b.x1-b.x0)*TW/2,hh=(b.y1-b.y0)*TW/2;v._pl={x:Math.max(m,hw-SW/2+m),y:Math.max(m,hh-SH/2+m)};if(FM!=null){v._pl.x+=SW*.3;v._pl.y+=SH*.3;}PAN.x=Math.max(-v._pl.x,Math.min(v._pl.x,PAN.x));PAN.y=Math.max(-v._pl.y,Math.min(v._pl.y,PAN.y));}const BB=BRL(),ZPC=(v._cam&&v._cam.fm===FM&&v._zc&&v._zc.fm2===FM&&Date.now()-v._zt<450)?v._zc:v._cam,ZSC=(ZPC&&ZPC.fm!==FM&&ZPC.r===R&&!RM)?TW/ZPC.tw:1,ML=Math.max(SW,SH)*Math.max(.6,(ZSC-1)/2+.7);let sea="",cliffs="";const LAY=[{c:"shn",lv:1.6,f:v=>v<1.6,d:""},{c:"shn",lv:RW0-1.6,f:v=>v>RW0-1.6,d:""},{c:"snd",lv:.95,f:v=>v<.95,d:""},{c:"snd",lv:RW0-.95,f:v=>v>RW0-.95,d:""},{c:"grn",lv:.45,f:v=>v<.45,d:""},{c:"grf",lv:RW0-.45,f:v=>v>RW0-.45,d:""}];const okR=(x,y)=>(x>=0&&y>=0&&x<GX&&y<GY)||RSET.has(x+","+y);
     const Wd=W(),Hd=H();let sandE="",tiles="",objs=[],wips=[],trees=[],parks=[],ghosts=[];
     const cc=FM==null?null:[PL[FM].cell.x+PL[FM].cell.w/2,PL[FM].cell.y+PL[FM].cell.h/2],ctr=FM==null?(()=>{const b=bb();return [(b.x0+b.x1)/2*TW,(b.y0+b.y1)/2*TW];})():G(...rotC(...cc)),offX=SW/2-ctr[0]+PAN.x,offY=(FM==null?TOPP+(SH-TOPP-WLH()-14)/2:SH/2+TW*.45)-ctr[1]+PAN.y;
     const occ={};J.filter(vis).forEach(j=>{const [x,y]=lotXY(j.m,j.lot);occ[x+","+y]=j;});
@@ -434,10 +434,15 @@ function mkIso(root,cfg){
     const nightL=NGT?`<rect class="ngt" x="${-offX-4000}" y="${-offY-4000}" width="${SW+8000}" height="${SH+8000}"/><g class="glow">${hz0}${traf}</g>`:"";
     bd.innerHTML=`<svg width="${vw}" height="${vh}" style="color:var(--ink);--k:${(TW/58).toFixed(3)}"><g transform="translate(${offX},${offY})">${shore}<g class="tg">${tiles}</g>${sandE}${traf}${poles}${wz}${hz}${nightL}${flags}${wb}</g></svg>`;
     // 확대·축소 이음: 새 그림을 옛 카메라 위치에서 시작해 부드럽게 다가감
-    {const pc=v._cam,sv=bd.querySelector("svg");if(pc&&pc.fm!==FM&&pc.r===R&&sv&&!RM){const sc=TW/pc.tw,tx=pc.ox-offX/sc,ty=pc.oy-offY/sc;
-      sv.style.transformOrigin="0 0";sv.style.transform=`translate(${tx}px,${ty}px) scale(${1/sc})`;sv.getBoundingClientRect();sv.style.transition="transform .45s cubic-bezier(.3,.7,.2,1)";sv.style.transform="none";}
+    {let pc=v._cam,dur=450;const sv=bd.querySelector("svg");
+      // 전환 도중 다시 그리면(크기 맞춤 등) 처음 카메라에서 남은 시간만큼 이어서 감: 한 프레임 튀는 것 막기
+      if(pc&&pc.fm===FM&&v._zc&&v._zc.fm2===FM&&Date.now()-v._zt<450){pc=v._zc;dur=Math.max(120,450-(Date.now()-v._zt));}
+      if(pc&&pc.fm!==FM&&pc.r===R&&sv&&!RM){if(dur==450){v._zc=Object.assign({},pc,{fm2:FM});v._zt=Date.now();}const sc=TW/pc.tw,tx=pc.ox-offX/sc,ty=pc.oy-offY/sc;
+      sv.style.transformOrigin="0 0";sv.style.transform=`translate(${tx}px,${ty}px) scale(${1/sc})`;sv.getBoundingClientRect();sv.style.transition=`transform ${dur}ms cubic-bezier(.3,.7,.2,1)`;sv.style.transform="none";}
      v._cam={ox:offX,oy:offY,tw:TW,fm:FM,r:R};}
     {const sc2=root.querySelector(".scr");v._sz=sc2.clientWidth+"x"+sc2.clientHeight;}
+    // 접는 중 줄 높이가 바뀌면(첫 그림·돌리기·거르기) 한 번 더 맞춤: 아래 줄이 구역을 덮지 않게
+    if(FM==null&&!v._wlFix){const w=root.querySelector("[data-wl]"),h2=w&&w.children.length>1?w.offsetHeight:0;if(Math.abs(h2-(v._wlUsed||0))>6){v._wlFix=1;requestAnimationFrame(()=>{render();v._wlFix=0;});}}
     // 한 달 보기: 집마다 부동산 앱처럼 팻말(의뢰인·금액)
     if(FM!=null){const G0=bd.querySelector("svg>g");let pins="",PS=[];const man=f=>f>=10000?Math.round(f/10000).toLocaleString("ko-KR")+"만":f?f.toLocaleString("ko-KR")+"원":"";
       J.filter(j=>j.m==FM&&j.done&&vis(j)).forEach(j=>{const el=bd.querySelector(`.hz[data-id="${j.id}"]`);if(!el)return;let b;try{b=el.getBBox()}catch(_){return}if(!b.width)return;

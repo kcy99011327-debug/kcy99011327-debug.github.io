@@ -153,7 +153,7 @@ function layout(out){const n=Array(12).fill(0);out.forEach(j=>n[j.m]++);
     const kx=R.w/w,ky=R.h/h,PX=u=>R.x+Math.floor((u+.5)*kx),PY=v=>R.y+Math.floor((v+.5)*ky),EX=u=>R.x+Math.round(u*kx),EY=v=>R.y+Math.round(v*ky);
     q.L.forEach((l,r)=>{for(let t=0;t<l;t++){const u=q.off[r]+t;lots.push(q.o?[PX(r),PY(u)]:[PX(u),PY(r)]);}});
     // 골목: 줄 사이 경계선을 따라 좁은 길(두 줄이 겹치는 구간만)
-    for(let r=1;r<q.L.length;r++){const s0=Math.min(q.off[r-1],q.off[r]),s1=Math.max(q.off[r-1]+q.L[r-1],q.off[r]+q.L[r]);ALY.push(q.o?[EX(r),EY(s0),EX(r),EY(s1)]:[EX(s0),EY(r),EX(s1),EY(r)]);}
+    for(let r=1;r<q.L.length;r++){const s0=Math.min(q.off[r-1],q.off[r]),s1=Math.max(q.off[r-1]+q.L[r-1],q.off[r]+q.L[r]);ALY.push(q.o?[EX(r),R.y,EX(r),R.y+R.h]:[R.x,EY(r),R.x+R.w,EY(r)]);/* 길목은 블록 끝(길)까지 이어 그림 */}
     lots.sort((a,b)=>(a[0]+a[1])-(b[0]+b[1])||a[0]-b[0]);
     lots.forEach(([lx,ly],i)=>TI[lx+","+ly]={m,i});for(let a=0;a<R.w;a++)for(let b=0;b<R.h;b++)CEL[(R.x+a)+","+(R.y+b)]=m;PL[m]={x,y,w:R.w,h:R.h,lots,cell:{x:R.x,y:R.y,w:R.w,h:R.h}};});
   GX=NR*U;GY=3*U;}
@@ -302,11 +302,11 @@ function mkIso(root,cfg){
       [[-.2,.05],[.18,-.1]].forEach(([u,w])=>d+=`<ellipse class="lily" cx="${cx+u*a}" cy="${cy+w*b}" rx="${3*k}" ry="${1.5*k}"/>`);
       for(let i=0;i<5;i++){const an=Math.PI*(.15+i*.18);d+=`<ellipse class="rk" cx="${cx+Math.cos(an)*a*.6}" cy="${cy+Math.sin(an)*b*.56}" rx="${2.4*k}" ry="${1.5*k}"/>`;}
       return `<g class="pk">${d}</g>`;}
-    if(v==1)return `<g class="pk"><path class="pth" d="M${cx-a*.8} ${cy}Q${cx} ${cy-b*.5} ${cx+a*.8} ${cy}"/><g transform="translate(${cx-a*.15},${cy+b*.15})">${bench(k)}</g><line class="lp" x1="${cx+a*.35}" y1="${cy+b*.1}" x2="${cx+a*.35}" y2="${cy-14*k}"/><circle class="lpb" cx="${cx+a*.35}" cy="${cy-14*k}" r="${1.8*k}"/></g>`;
+    if(v==1)return `<g class="pk"><g transform="translate(${cx-a*.15},${cy+b*.15})">${bench(k)}</g><line class="lp" x1="${cx+a*.35}" y1="${cy+b*.1}" x2="${cx+a*.35}" y2="${cy-14*k}"/><circle class="lpb" cx="${cx+a*.35}" cy="${cy-14*k}" r="${1.8*k}"/></g>`;
     if(v==2){const hh=3*k;let d=`<ellipse class="fbw" cx="${cx}" cy="${cy}" rx="${a*.48}" ry="${b*.44}"/><rect class="fbw" x="${cx-a*.48}" y="${cy-hh}" width="${a*.96}" height="${hh}"/><ellipse class="fbt" cx="${cx}" cy="${cy-hh}" rx="${a*.48}" ry="${b*.44}"/><ellipse class="fbs" cx="${cx}" cy="${cy-hh}" rx="${a*.4}" ry="${b*.36}"/>`;
       const fl=[];for(let i=0;i<9;i++){const an=i*2.4,r=.1+(i%4)*.07;fl.push([cx+Math.cos(an)*a*r,cy-hh+Math.sin(an)*b*r,i]);}fl.sort((p,q)=>p[1]-q[1]);
       fl.forEach(([x,y,i])=>d+=`<line class="stem" x1="${x}" y1="${y}" x2="${x}" y2="${y-3*k}"/><circle class="fl f${i%3}" cx="${x}" cy="${y-3.4*k}" r="${1.6*k}"/>`);return `<g class="pk">${d}</g>`;}
-    return `<g class="pk"><path class="pth" d="M${cx-a*.7} ${cy+b*.35}Q${cx-a*.1} ${cy-b*.2} ${cx+a*.2} ${cy+b*.1}T${cx+a*.75} ${cy-b*.3}"/>${tree(cx-a*.35,cy-b*.25,(t.o)%3)}</g>`;}
+    return `<g class="pk">${tree(cx-a*.35,cy-b*.25,(t.o)%3)}</g>`;}
   // 벤치: 땅 격자 방향(번갈아 두 방향)을 따르는 입체 벤치. 등받이(뒤) → 다리 → 앉는 판 순서
   let BNC=0;function bench(k){const ax=(BNC++)%2,L=.17,D=.055,u=ax?[-TW/2,TH/2]:[TW/2,TH/2],v=ax?[-TW/2,-TH/2]:[TW/2,-TH/2],
       pt=(a,b,z)=>[u[0]*a+v[0]*b,u[1]*a+v[1]*b-z],sh=3.2*k,th=1*k,bh=4.2*k;
@@ -540,7 +540,7 @@ const MARKUP=()=>`<div data-main><div class="vhead"><div class="yr"><button data
         <i class="vsp"></i><div class="fseg" data-f><button class="on" data-k="all">전체</button><button data-k="c">커미션</button><button data-k="o">외주</button></div></div>
       <div class="stat" data-stat></div>
       <div class="desk"><div class="wl" data-wl></div><div class="scr"><div class="board" data-board></div></div>
-        <div class="ctl"><button data-night title="밤">☾</button><button data-rot="-1">↺</button><button data-rot="1">↻</button></div></div></div>`;
+        <div class="ctl"><button data-night title="밤">☾</button></div></div></div>`;
 const CFG={depth:8,wip:"접는 중",
   base:(c,d)=>{const o=10;return `<polygon class="shad" points="${P(c.map(p=>[p[0]+o,p[1]+o+d]))}"/><polygon class="sheet2" points="${P([c[3],c[2],[c[2][0],c[2][1]+d],[c[3][0],c[3][1]+d]])}"/><polygon class="sheet2" points="${P([c[2],c[1],[c[1][0],c[1][1]+d],[c[2][0],c[2][1]+d]])}" style="filter:brightness(.93)"/>`;},
   flag:(x,y,m)=>{const w=m>8?48:40,H=34,c=m==CM?" now":"";return [`<g class="mpo${c}"><ellipse cx="${x}" cy="${y}" rx="5" ry="2.5"/><line x1="${x}" y1="${y}" x2="${x}" y2="${y-H}"/></g>`,`<g class="mlg${c}" transform="translate(${x},${y-H})"><line class="mpl" x1="0" y1="0" x2="0" y2="14"/><rect x="0" y="-2" width="${w}" height="24" rx="4"/><text x="${w/2}" y="14.5" text-anchor="middle">${MN[m]}</text></g>`]},

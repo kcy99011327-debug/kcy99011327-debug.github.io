@@ -3918,7 +3918,7 @@ var cmOpenId=null;function cmTryOpen(){if(cmOpenId)window.dispatchEvent(new Even
 function cmWrapBridge(){let b=window.__cmBridge;if(!b||b.__w)return;b.__w=!0;["setJob","delJob","setTpl","delTpl","setCfg"].forEach((k)=>{let f=b[k];b[k]=(...a)=>{let r=f(...a);window.__cmSig=cmSig();return r}})}
 cmWrapBridge();
 
-var BUILD_V="1793661917197";try{document.documentElement.classList.add("sbt")}catch(_){}
+var BUILD_V="1793662767798";try{document.documentElement.classList.add("sbt")}catch(_){}
 var updSeen=0,updOnce=0,updX=0;
 function webUpd(auto,man){try{if(!man&&(typeof WGWIN!=="undefined"&&WGWIN||typeof RAILWIN!=="undefined"&&RAILWIN))return;let pc=!!window.planner;if(!/^\d+$/.test(BUILD_V)||(!pc&&location.protocol==="file:"))return;if(auto&&!man){let ae=document.activeElement;if(ae&&/^(INPUT|TEXTAREA|SELECT)$/.test(ae.tagName)||ae&&ae.isContentEditable||document.querySelector(".modal"))return}fetch((pc?DB_HOME+(window.DB_SHARE?"share/":""):"./")+"version.json?t="+Date.now(),{cache:"no-store"}).then((r)=>r.ok?r.json():null).then((jv)=>{if(!jv||!jv.v||(pc?+jv.v<=+BUILD_V:String(jv.v)===BUILD_V)){if(man)j("최신 버전이에요");return}if(pc&&jv.app&&jv.app!==APP_VER)return;if(!man&&window.DB_SHARE&&(!jv.app||jv.app===APP_VER))return;if(pc&&!man){if(!updSeen){updSeen=Date.now();setTimeout(()=>webUpd(!1),32000);return}if(Date.now()-updSeen<30000)return}if(document.getElementById("upd-banner"))return;if(!man){if(window.DB_SHARE){if(updOnce)return}else if(updOnce&&+jv.v<=updOnce&&Date.now()-updX<6e5)return}updOnce=window.DB_SHARE?1:+jv.v||1;let d=document.createElement("div");d.id="upd-banner";d.style.cssText="position:fixed;left:12px;right:12px;top:calc(12px + env(safe-area-inset-top,0px));z-index:9999;display:flex;align-items:center;gap:10px;padding:11px 12px 11px 16px;border-radius:14px;background:#2b2b33;color:#fff;font:600 14px/1.3 system-ui,sans-serif;box-shadow:0 8px 28px rgba(0,0,0,.3)";let t=document.createElement("span");t.style.flex="1";t.textContent="새 버전이 나왔어요"+(jv.app&&jv.app!==APP_VER?` · ${APP_VER} → ${jv.app}`:"");let go=document.createElement("button");go.type="button";go.textContent="업데이트";go.style.cssText="border:0;border-radius:10px;padding:7px 12px;background:#fff;color:#222;font:700 13px system-ui,sans-serif";go.onclick=()=>{try{sessionStorage.dbUpdGo="1"}catch(_){}if(pc){if(/[\\/]live[\\/]/.test(decodeURIComponent(location.pathname))){go.textContent="적용 중…";location.reload()}else{d.remove();j("Daterbase를 껐다 켜면 새 버전이 적용돼요")}return}go.textContent="적용 중…";fetch("./index.html",{cache:"reload"}).catch(()=>{}).then(()=>location.reload())};let x=document.createElement("button");x.type="button";x.textContent="×";x.setAttribute("aria-label","닫기");x.style.cssText="border:0;background:none;color:#fff;font-size:20px;line-height:1;padding:0 4px;opacity:.7";x.onclick=()=>{updX=Date.now();d.remove()};d.append(t,go,x);document.body.appendChild(d)}).catch(()=>{if(man)j("업데이트를 확인하지 못했어요")})}catch(_){}}
 if(typeof window!=="undefined"){setTimeout(()=>webUpd(!1),700);document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible")webUpd(!0)});window.addEventListener("pageshow",()=>webUpd(!0));window.addEventListener("focus",()=>webUpd(!0));window.addEventListener("online",()=>webUpd(!0));setInterval(()=>webUpd(!0),90000)}
@@ -5413,7 +5413,7 @@ function OjChat({o0,onClose}){let[o,so]=z(()=>({...o0})),set=(p)=>so((x)=>({...x
     ans=cmH(se,null,cmH("dl",{className:"cmc-sum"},[["이름",o.title||"–"],["의뢰처",o.client||"–"],["양",mxC?ojRealTx(o,o.unit||""):pgm?o.pg.length+"페이지 · "+o.total+(o.unit||"컷"):o.total+(o.unit||"컷")],["기간",ojMd(o.start)+" → "+ojMd(o.due)+" · 작업일 "+ojDays(o,o.start,o.due).length+"일"],["과정",stg.map((x)=>x.name).join(" › ")+(fl?" ("+fl+")":"")]].map(([a,b])=>cmH(se,{key:a},cmH("dt",null,a),cmH("dd",null,b)))),
       btns(nx("등록하기",mk)))}
   return cmH("div",{className:"modal-backdrop",onMouseDown:(e)=>e.target===e.currentTarget&&onClose()},cmH("div",{className:"modal cmc oj-chat",role:"dialog","aria-label":"새 외주"},
-    cmH("header",{className:"cmv-head"},cmH("b",null,"새 외주"),cmH("span",{className:"cmc-step"},(st+1)+" / "+(steps.length+(fx&&!f.subtype&&steps[1]==="type"?1:0))),cmH("i",{style:{flex:1}}),cmH("button",{type:"button",className:"icon-btn","aria-label":"닫기",onClick:()=>onClose()},s(A,{name:"x"}))),
+    cmH("header",{className:"cmv-head"},cmH("b",null,"새 외주"),cmH("span",{className:"cmc-step"},(st+1)+" / "+steps.length),cmH("i",{style:{flex:1}}),cmH("button",{type:"button",className:"icon-btn","aria-label":"닫기",onClick:()=>onClose()},s(A,{name:"x"}))),
     cmH("div",{className:"cmc-log"},log.map((l,i)=>cmH(se,{key:i},cmH("div",{className:"cmc-b cmc-b--bot"},l.q),cmH("div",{className:"cmc-b cmc-b--me cmc-b--re",role:"button",tabIndex:0,title:"눌러서 다시 답하기",onClick:()=>{slog((x)=>x.slice(0,i));sst(i);sv("")},onKeyDown:(e)=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();e.currentTarget.click()}}},cmH("span",null,l.a),cmH("i",{className:"cmc-pen","aria-hidden":"true"},s(A,{name:"edit",size:12}))))),
       cmH("div",{className:"cmc-b cmc-b--bot"},Q[cur]),cmH("div",{className:"cmc-ans"},ans,st?cmH("button",{type:"button",className:"cmc-back",onClick:back},"← 이전 질문"):null),cmH("span",{ref:end}))))}
 function OjTL({o,from}){let[di,sdi]=z(0),pl=ojPlan(o,from,30),i0=Math.min(di,Math.max(0,pl.days.length-1)),day=pl.days[i0],stg=ojStages(o),
@@ -10532,7 +10532,7 @@ function setMmFloat(g){var h=document.documentElement;if(g){localStorage.setItem
 function fgeo(p){if(p.id==="rail"){var r=J("dbRailPos",{});return {x:r.x||160,y:r.y||90,w:Math.min(r.w||360,520),h:r.h||560}}var f=J("dbWsMm",{});return {x:f.x||innerWidth/K()-460,y:f.y||80,w:f.w||380,h:f.h||560}}
 function apply(p,m,frac,geo){
  if(m==="f"){var g=geo||fgeo(p);if(p.id==="rail")dispatchEvent(new CustomEvent("ws-set",{detail:{id:"rail",m:"f",x:g.x,y:g.y,w:g.w,h:g.h}}));else{setMmFloat(g);dispatchEvent(new CustomEvent("ws-set",{detail:{id:"mm"}}))}return}
- var w=frac?Math.round(WW()*frac):width(p);
+ var w=frac?Math.round(WW()*frac):width(p);try{var LL=J("dbWsLast",{});LL[p.id]={m:m,f:w/WW()};localStorage.setItem("dbWsLast",JSON.stringify(LL))}catch(_){}
  if(p.id==="mm")setMmFloat(null);
  dispatchEvent(new CustomEvent("ws-set",{detail:{id:p.id,m:m,w:w}}));
 }
@@ -10553,17 +10553,17 @@ function menu(p,b){closeM();var m=mode(p),r=b.getBoundingClientRect(),W=WW(),w=w
   if(l)apply(p,l[0],l[1]==="2"?.5:1/3);else if(a==="f"){if(m!=="f")apply(p,"f")}else if(a==="x")p.close()};
 }
 /* 끌기: 가장자리 = 반으로 붙이기, 가운데 = 떠 있는 창(떠 있으면 옮기기) */
-var zL,zR;function zones(){if(zL)return;zL=document.createElement("div");zR=document.createElement("div");zL.className=zR.className="wsz";zL.innerHTML="<b>왼쪽 반</b>";zR.innerHTML="<b>오른쪽 반</b>";document.body.append(zL,zR)}
+var zL,zR;function zones(){if(zL)return;zL=document.createElement("div");zR=document.createElement("div");zL.className=zR.className="wsz";zL.innerHTML="<b>왼쪽 1/3</b>";zR.innerHTML="<b>오른쪽 1/3</b>";document.body.append(zL,zR)}
 function down(e,p,b){if(e.button!==0)return;e.preventDefault();e.stopPropagation();var x0=e.clientX,y0=e.clientY,go=!1,g=null,side=null,el=document.querySelector(p.sel),er=el.getBoundingClientRect(),fl=mode(p)==="f",gw=fl?er.width:300,gh=fl?er.height:200,ox=fl?x0-er.left:gw/2,oy=fl?y0-er.top:10;
- var mv=function(ev){var x=ev.clientX,y=ev.clientY;if(!go){if(Math.hypot(x-x0,y-y0)<6)return;go=!0;zones();var sb=SB()*K();zL.style.cssText="left:"+(sb+10)+"px;top:10px;bottom:10px;width:calc((100vw - "+sb+"px)/2 - 15px)";zR.style.cssText="right:10px;top:10px;bottom:10px;width:calc((100vw - "+sb+"px)/2 - 15px)";
+ var mv=function(ev){var x=ev.clientX,y=ev.clientY;if(!go){if(Math.hypot(x-x0,y-y0)<6)return;go=!0;zones();var sb=SB()*K();zL.style.cssText="left:"+(sb+10)+"px;top:10px;bottom:10px;width:calc((100vw - "+sb+"px)/3 - 15px)";zR.style.cssText="right:10px;top:10px;bottom:10px;width:calc((100vw - "+sb+"px)/3 - 15px)";
    if(fl){el.style.transition="none"}else{g=document.createElement("div");g.className="wsg";g.textContent=p.name;g.style.width=gw+"px";g.style.height=gh+"px";document.body.appendChild(g);el.style.opacity=".35"}}
-  var sb=SB()*K();side=x<sb+60?"l":x>innerWidth-60?"r":null;zL.classList.toggle("on",side==="l");zR.classList.toggle("on",side==="r");
+  var sb=SB()*K();side=x<sb+160?"l":x>innerWidth-160?"r":null;zL.classList.toggle("on",side==="l");zR.classList.toggle("on",side==="r");
   if(fl){var nx=(x-ox)/K(),ny=Math.max(0,(y-oy)/K());if(p.id==="mm"){var h=document.documentElement;h.style.setProperty("--wsx",nx+"px");h.style.setProperty("--wsy",ny+"px")}else{el.style.left=nx+"px";el.style.top=ny+"px"}}
   else{g.style.left=(x-ox)+"px";g.style.top=(y-oy)+"px"}};
  var up=function(ev){removeEventListener("pointermove",mv);removeEventListener("pointerup",up);removeEventListener("pointercancel",up);
   if(zL){zL.classList.remove("on");zR.classList.remove("on")}if(g)g.remove();el.style.opacity="";el.style.transition="";
-  if(!go){menu(p,b);return}
-  if(side){apply(p,side,.5);return}
+  if(!go){var now=Date.now();if(b._t&&now-b._t<380){b._t=0;closeM();if(mode(p)==="f"){var L=J("dbWsLast",{})[p.id]||{m:"r",f:1/3};apply(p,L.m,Math.max(.2,Math.min(.67,L.f||1/3)))}else apply(p,"f");return}b._t=now;menu(p,b);return}
+  if(side){apply(p,side,1/3);return}
   var x=(ev.clientX-ox)/K(),y=Math.max(0,(ev.clientY-oy)/K());
   if(fl){var c=fgeo(p);apply(p,"f",null,{x:x,y:y,w:fl?er.width/K():c.w,h:er.height/K()})}
   else{var c2=fgeo(p);apply(p,"f",null,{x:x,y:y,w:c2.w,h:c2.h})}};

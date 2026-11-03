@@ -112,15 +112,18 @@ const inMR=(x,y)=>MR.some(r=>x>=r.x&&x<r.x+r.w&&y>=r.y&&y<r.y+r.h),inPkY=inMR;
 // 땅 모양: 마을 밖은 둥글고 들쭉날쭉한 둘레 땅(ZN 0) → 강(1) → 건너편 땅(2). 다리(BR)는 가운데 길 따라 밖으로
 const LIM=(x,y)=>Math.max(2.3,3.4+.9*Math.sin(x*.33+1.3)+.7*Math.sin(y*.29+.4)+.5*Math.sin((x+y)*.17+2.1)),RVW=(x,y)=>5+1.4*Math.sin(x*.21+y*.19+.7);
 // 해안 도시: 뒤쪽(y<0) 한 면만 육지로 이어지고(올라갈수록 해안선이 벌어짐) 나머지 세 면은 바다
-const FF=(px,py)=>{const up=py<0?-py:0,dx0=px<0?-px:px>GX?px-GX:0,dx=Math.max(0,dx0-up*1.3),dy=py>GY?py-GY:0;return Math.hypot(dx,dy)-LIM(px,py);},RW0=1e9;
+// 강 (04 2026-11-03 실제 지도 참고 "강도 흐르면 좋겠고"): 마을 왼쪽(x<0)을 따라 내려오다 앞쪽(y>GY)으로 굽어 흐르는 강. 굽이(사인 두 겹)로 폭·거리 달라짐
+// FF<.45 = 마을 쪽 땅, .45~RW0-.45 = 물·모래, >RW0-.45 = 건너편 땅
+const RVD=(x,y)=>{const dx=Math.max(0,-x),dy=Math.max(0,y-GY),al=y-x;return Math.hypot(dx,dy)-(5.8+1.9*Math.sin(al*.15+1)+.6*Math.sin(al*.37+2));},RW0=5.2;
+const FF=(px,py)=>RVD(px,py)+RW0/2;
 // 칸 네 꼭짓점이 모두 물가선(.45) 안이면 땅(0), 모두 건너편 선 밖이면 건너편(2), 아니면 물·모래(1, 칸 대신 매끈한 곡선으로 그림)
 const ZN=(x,y)=>{if(x>=0&&y>=0&&x<GX&&y<GY)return 0;const v=[FF(x,y),FF(x+1,y),FF(x,y+1),FF(x+1,y+1)];if(Math.max(...v)<.45)return 0;if(Math.min(...v)>RW0-.45)return 2;return 1;};
-const BRL=()=>({x:-99,y:-99}),BRL0=()=>{const ax=[...RDX].filter(v=>v<GX).sort((a,b)=>a-b),ay=[...RDY].filter(v=>v<GY).sort((a,b)=>a-b);return {x:ax.length?ax[Math.floor((ax.length-1)/2)]:-1,y:ay.length?ay[Math.floor((ay.length-1)/2)]:-1};};
-const BR=(x,y,b)=>(x==b.x&&(y<0||y>=GY))||(y==b.y&&(x<0||x>=GX));
+const BRL=()=>BRL0(),BRL0=()=>{const ax=[...RDX].filter(v=>v<GX).sort((a,b)=>a-b),ay=[...RDY].filter(v=>v<GY).sort((a,b)=>a-b);return {x:ax.length?ax[Math.floor((ax.length-1)/2)]:-1,y:ay.length?ay[Math.floor((ay.length-1)/2)]:-1};};
+const BR=(x,y,b)=>x==b.x&&(y<0||y>=GY);// 다리는 앞쪽 하나만 (04 2026-11-03)
 const rdSegs=(f,ax,a0,a1)=>{const cut=MR.filter(r=>ax=='x'?f>=r.x&&f<r.x+r.w:f>=r.y&&f<r.y+r.h).map(r=>ax=='x'?[r.y,r.y+r.h]:[r.x,r.x+r.w]).sort((a,b)=>a[0]-b[0]);let o=[],c=a0;cut.forEach(([u,v])=>{if(u>c)o.push([c,u]);c=Math.max(c,v);});if(a1>c)o.push([c,a1]);return o;};
 // 미피(딕 브루너) 색감: 납작한 원색 6가지 + 진한 테두리. false면 앱 테마 색
 const MIFFY=true,BRUNA0=["#f26935","#005b93","#ffdd50","#6c3304","#2f8a3a","#e3231b"];
-let EMP=[],MR=[],DYN=[],TW=88,TH=44,GX=15,GY=12,PL=[],TI={},CEL={},LN={},ALY=[],PK=null,GDN=[],RDX=new Set(),RDY=new Set();
+let RB=null,RCN=[],CAS=new Set(),CNK=new Set(),EMP=[],MR=[],DYN=[],TW=88,TH=44,GX=15,GY=12,PL=[],TI={},CEL={},LN={},ALY=[],PK=null,GDN=[],RDX=new Set(),RDY=new Set();
 // 달 구역 크기: 그 달 일 수에 맞춰 정사각형(최소 3×3). 같은 열은 가장 넓은 달, 같은 줄은 가장 깊은 달에 맞춤 → 길이 곧게 이어짐
 function layout(out){const n=Array(12).fill(0);out.forEach(j=>n[j.m]++);
   // 그 달 일 수만큼 집터(a×b). 집터 줄 사이엔 골목(LN), 달마다 골목 방향을 바꿈. 구역 안 자리는 조금씩 어긋나게
@@ -154,9 +157,30 @@ function layout(out){const n=Array(12).fill(0);out.forEach(j=>n[j.m]++);
     q.L.forEach((l,r)=>{for(let t=0;t<l;t++){const u=q.off[r]+t;lots.push(q.o?[PX(r),PY(u)]:[PX(u),PY(r)]);}});
     // 골목: 줄 사이 경계선을 따라 좁은 길(두 줄이 겹치는 구간만)
     for(let r=1;r<q.L.length;r++){const s0=Math.min(q.off[r-1],q.off[r]),s1=Math.max(q.off[r-1]+q.L[r-1],q.off[r]+q.L[r]);ALY.push(q.o?[EX(r),R.y,EX(r),R.y+R.h,m]:[R.x,EY(r),R.x+R.w,EY(r),m]);/* 길목은 블록 끝(길)까지 이어 그림 */}
+    /* 큰 원형 길 위에는 집을 두지 않음 */if(PK){const pcx=PK.x+PK.w/2,pcy=PK.y+PK.h/2,RRx=(PK.w/2+.5)*Math.SQRT2+.75;for(let i=lots.length-1;i>=0;i--)if(lots.length>1&&Math.hypot(lots[i][0]+.5-pcx,lots[i][1]+.5-pcy)<RRx)lots.splice(i,1);}
     lots.sort((a,b)=>(a[0]+a[1])-(b[0]+b[1])||a[0]-b[0]);
     lots.forEach(([lx,ly],i)=>TI[lx+","+ly]={m,i});for(let a=0;a<R.w;a++)for(let b=0;b<R.h;b++)CEL[(R.x+a)+","+(R.y+b)]=m;PL[m]={x,y,w:R.w,h:R.h,lots,cell:{x:R.x,y:R.y,w:R.w,h:R.h}};});
-  GX=NR*U;GY=3*U;}
+  GX=NR*U;GY=3*U;
+  // 둥근 모서리 (04 2026-11-03 "모서리에 있는 것만 둥글게 말아"): 실제 마을(달·공원 블록) 바깥 모양에서 볼록한 모서리만 찾음. 빈 칸 모서리는 제외
+  {const oc=(i,j)=>i>=0&&j>=0&&i<NR&&j<3&&used[tk(i,j)]==1,cv=(i,j,dx,dy)=>oc(i,j)&&!oc(i+dx,j)&&!oc(i,j+dy)&&!oc(i+dx,j+dy);RCN=[];CAS=new Set();CNK=new Set();
+    for(let i=0;i<NR;i++)for(let j=0;j<3;j++)[[-1,-1],[1,-1],[-1,1],[1,1]].forEach(([dx,dy])=>{if(!cv(i,j,dx,dy)||dy<0)return;/* 뒤쪽(2월·12월 쪽) 모서리는 둥글게 안 함, 강 쪽 앞 모서리만 (04 2026-11-03) */const tx=dx<0?i*U-1:i*U+S,ty=dy<0?j*U-1:j*U+S,r=cv(i,j,-dx,dy)||cv(i,j,dx,-dy)?2.4:4.2;
+      RCN.push({nx:tx+.5,ny:ty+.5,sx:-dx,sy:-dy,r});CNK.add(tx+","+ty);for(let t=1;t<=4;t++){CAS.add(tx+","+(ty+dy*t));CAS.add((tx+dx*t)+","+ty);}});}
+  /* 공원 둘레 네모 길은 없애고 더 큰 동그란 길로 (04 2026-11-03 "정사각형 도로보다 키워") */if(PK){for(let t=0;t<PK.w;t++){CAS.add((PK.x+t)+","+(PK.y-1));CAS.add((PK.x+t)+","+(PK.y+PK.h));}for(let t=0;t<PK.h;t++){CAS.add((PK.x-1)+","+(PK.y+t));CAS.add((PK.x+PK.w)+","+(PK.y+t));}}
+  // 블록 크기 제각각 (04 2026-11-03 실제 지도 참고 "땅도 자연스럽게"): 이웃 블록 둘·넷을 큰 땅(아파트 단지처럼)으로 합침. 사이 길은 없어지고 땅이 이어짐
+  {const tk2=(a,b)=>a+","+b,uu={},inG=(a,b)=>a>=0&&b>=0&&a<NR&&b<3,cand=[];for(let a=-11;a<NR+11;a++)for(let b=-11;b<14;b++)cand.push([a,b]);
+    const bc=Math.floor((NR-1)/2),ok=(a,b,w,h)=>{if(a<=bc&&a+w-1>bc||b<=1&&b+h-1>1)return false;/* 다리로 가는 길은 끊지 않음 */for(let i=0;i<w;i++)for(let j=0;j<h;j++){const A=a+i,B=b+j;if(uu[tk2(A,B)])return false;if(inG(A,B))return false;}return true;};
+    cand.forEach(([a,b])=>{const h=hsh((a+40)*31+(b+40)*17);if(h%10>=4)return;const sh=[[2,1],[1,2],[2,2],[3,1]][(h>>4)%4];if(!ok(a,b,...sh))return;
+      for(let i=0;i<sh[0];i++)for(let j=0;j<sh[1];j++)uu[tk2(a+i,b+j)]=1;MR.push({x:a*U,y:b*U,w:sh[0]*U-1,h:sh[1]*U-1,vm:1});});
+    // 마을 안 달 블록은 꾸밈으로 합치지 않음: 일이 많은 달만 옆·아래 블록을 차지하고 다른 달이 뒤로 밀림(위 layout, 04 2026-11-03)
+    }}
+// 땅 모양 (04 2026-11-03 "블록 자체가 사각형, 지도처럼"): 교차로(길 가운데 격자점)마다 위치를 조금씩 비틀어 블록이 제각각 사다리꼴·마름모꼴이 되게.
+// 격자점 사이는 그대로 이어 붙여(쌍선형) 길은 곧고 끊기지 않음. 집·칸·길 모두 같은 비틀기를 따름
+const WA=0,WN=(i,j)=>hsh((i+50)*41+(j+50)*67)%4?[0,0]:[((hsh((i+50)*73+(j+50)*19)%1000)/1000-.5)*2*WA,((hsh((i+50)*31+(j+50)*97)%1000)/1000-.5)*2*WA];
+const WP0=(x,y)=>{const u=(x-4.5)/5,v=(y-4.5)/5,i=Math.floor(u),j=Math.floor(v),fx=u-i,fy=v-j,a=WN(i,j),b=WN(i+1,j),c=WN(i,j+1),d=WN(i+1,j+1),m=(k)=>a[k]*(1-fx)*(1-fy)+b[k]*fx*(1-fy)+c[k]*(1-fx)*fy+d[k]*fx*fy;return [x+m(0),y+m(1)];};
+// 둥근 모서리 땅 (04 2026-11-03 "모서리에 있는 것만, 1월 모서리 도로만 둥그렇게"): 1월 바깥 모서리(강 쪽) 교차로 둘레를 원호로 당김. 네모 모서리→원, 바깥으로 갈수록 원래대로
+const WP=(x,y)=>{for(const k of RCN){const cx=k.nx+k.sx*k.r,cy=k.ny+k.sy*k.r,a=(cx-x)*k.sx,b=(cy-y)*k.sy;if(a<=0||b<=0)continue;const m=Math.max(a,b),L=Math.hypot(a,b),f=m<=k.r+.7?1:Math.max(0,1-(m-k.r-.7)/(1.4*k.r)),s=1-f+f*m/L;x=cx-k.sx*a*s;y=cy-k.sy*b*s;}/* 가운데 분수공원 땅을 동그랗게 (04 2026-11-03): 공원 블록+둘레 길을 원으로, 밖으로 갈수록 원래대로 */if(PK&&0){const cx=PK.x+PK.w/2,cy=PK.y+PK.h/2,R=PK.w/2+.5,a=x-cx,b=y-cy,m=Math.max(Math.abs(a),Math.abs(b)),L=Math.hypot(a,b);if(L>1e-6){const f=m<=R+.7?1:Math.max(0,1-(m-R-.7)/2.5),s=1-f+f*m*Math.SQRT2/L;/* 원이 네 모서리 교차로를 지나게(모서리는 제자리, 변 가운데를 바깥으로) — 길이 안으로 말리지 않게 (04 2026-11-03) */x=cx+a*s;y=cy+b*s;}}return [x,y];};
+// 긴 변은 잘게 나눠 비틀린 땅을 따라 꺾이게
+const SUBD=(pts,m=.3)=>{const o=[];for(let i=0;i<pts.length;i++){const a=pts[i],b=pts[(i+1)%pts.length],n=Math.max(1,Math.ceil(Math.hypot(b[0]-a[0],b[1]-a[1])/m));for(let j=0;j<n;j++)o.push([a[0]+(b[0]-a[0])*j/n,a[1]+(b[1]-a[1])*j/n]);}return o;};
 const P=a=>a.map(p=>p[0].toFixed(1)+","+p[1].toFixed(1)).join(" ");
 const up=(p,h)=>[p[0],p[1]-h];
 function iso(j,cx,cy,sc=1){
@@ -232,9 +256,9 @@ function mkIso(root,cfg){
   const main=root.querySelector("[data-main]"),bd=root.querySelector("[data-board]");let R=0,filt="all",nbCl=null;let PAN={x:0,y:0},PK0=null,RSET=new Set();
   // 마을 밖 길: 교차로끼리 이어진 구간만 남기고, 한쪽만 이어진 끝 구간은 계속 잘라내서 막다른 길이 없게
   const buildRS=()=>{const ext=(lo,hi)=>{const o=[];for(let v=lo;v<=hi;v++)if(((v%5)+5)%5==4)o.push(v);return o;},EX=ext(-PAD,GX+PAD-1),EY=ext(-PAD,GY+PAD-1);
-    const inV=(x,y)=>x>=0&&y>=0&&x<GX&&y<GY,land=(x,y)=>ZN(x,y)==0,K=(x,y)=>x+","+y;
+    const inV=(x,y)=>x>=0&&y>=0&&x<GX&&y<GY,land=(x,y)=>ZN(x,y)!=1||BR(x,y,BRL0()),K=(x,y)=>x+","+y;
     const cv={},ch={};EX.forEach(x=>cv[x]=rdSegs(x,'x',-PAD,GY+PAD));EY.forEach(y=>ch[y]=rdSegs(y,'y',-PAD,GX+PAD));
-    const on=(x,y,vert)=>land(x,y)&&(vert?cv[x]:ch[y]).some(([u,v])=>{const t=vert?y:x;return t>=u&&t<v;});
+    const on=(x,y,vert)=>land(x,y)&&!CAS.has(x+","+y)&&(vert?cv[x]:ch[y]).some(([u,v])=>{const t=vert?y:x;return t>=u&&t<v;});
     const nd=new Set();EX.forEach(x=>EY.forEach(y=>{if(land(x,y)&&!inMR(x,y))nd.add(K(x,y));}));
     const E=[];EX.forEach(x=>{for(let i=0;i+1<EY.length;i++){const a=EY[i],b=EY[i+1];if(!nd.has(K(x,a))||!nd.has(K(x,b)))continue;let ok=true;for(let t=a;t<=b;t++)if(!on(x,t,1)){ok=false;break;}if(ok)E.push({a:K(x,a),b:K(x,b),v:1,f:x,u:a,w:b,on:1});}});
     EY.forEach(y=>{for(let i=0;i+1<EX.length;i++){const a=EX[i],b=EX[i+1];if(!nd.has(K(a,y))||!nd.has(K(b,y)))continue;let ok=true;for(let t=a;t<=b;t++)if(!on(t,y,0)){ok=false;break;}if(ok)E.push({a:K(a,y),b:K(b,y),v:0,f:y,u:a,w:b,on:1});}});
@@ -249,12 +273,12 @@ function mkIso(root,cfg){
   const W=()=>R%2?RH:RW,H=()=>R%2?RW:RH,scr=(x,y)=>[(x-y)*TW/2,(x+y)*TH/2];
   // 한 해 보기: 달 블록들이 차지하는 화면 범위(TW 단위). 이 범위가 화면을 꽉 채우게 맞춤
   const bb=()=>{let x0=1e9,x1=-1e9,y0=1e9,y1=-1e9;PL.forEach(q=>{const c=q.cell;[[c.x,c.y],[c.x+c.w,c.y],[c.x,c.y+c.h],[c.x+c.w,c.y+c.h]].forEach(([u,v])=>{const [a,b]=rotC(u,v),X=(a-b)/2,Y=(a+b)/4;x0=Math.min(x0,X);x1=Math.max(x1,X);y0=Math.min(y0,Y);y1=Math.max(y1,Y);});});return {x0:x0-.25,x1:x1+.25,y0:y0-.1,y1:y1+.15};};const WLH=()=>{const w=root.querySelector("[data-wl]");const h=w&&w.children.length>1?w.offsetHeight:0;v._wlUsed=h;return h;},TOPP=58;
-  const fit=()=>{const sc=root.querySelector(".scr");if(!sc)return;const dk=root.querySelector(".desk"),t=dk.getBoundingClientRect().top+(document.scrollingElement||{}).scrollTop||0;{const nh=Math.max(360,Math.round(innerHeight-dk.getBoundingClientRect().top-16));if(Math.abs(nh-(dk._h||0))>4){dk._h=nh;dk.style.height=nh+"px";}}const n=FM==null?(GX+GY)/2*.95:(PL[FM].cell.w+PL[FM].cell.h)/2+1.2,aw=sc.clientWidth-60,wlE=root.querySelector("[data-wl]"),ah=sc.clientHeight-40-(wlE&&wlE.offsetHeight&&FM==null?wlE.offsetHeight+8:0);
+  const fit=()=>{const sc=root.querySelector(".scr");if(!sc)return;const dk=root.querySelector(".desk"),t=dk.getBoundingClientRect().top+(document.scrollingElement||{}).scrollTop||0;{/* 한 해·한 달마다 칸 위치를 기억해 두고 바로 그 높이로 그림: 두 번 그리며 늦어지는 것 막기 (04 2026-11-03 "딜레이·움찔") */const tp=(v._tops||{})[FM==null?"y":"m"],nh=Math.max(360,Math.round(innerHeight-(tp!=null?tp:dk.getBoundingClientRect().top)-16));if(Math.abs(nh-(dk._h||0))>4){dk._h=nh;dk.style.height=nh+"px";}}const n=FM==null?(GX+GY)/2*.95:(PL[FM].cell.w+PL[FM].cell.h)/2+1.2,aw=sc.clientWidth-60,wlE=root.querySelector("[data-wl]"),ah=sc.clientHeight-40-(wlE&&wlE.offsetHeight&&FM==null?wlE.offsetHeight+8:0);
     // 높이: 땅(n*TW/2) + 위 여유(건물·팻말 ≈ 1.6TW) + 두께
     if(FM==null){const b=bb();TW=Math.max(24,Math.min((sc.clientWidth-40)/(b.x1-b.x0),(sc.clientHeight-TOPP-WLH()-14)/(b.y1-b.y0),200));}else TW=Math.max(30,Math.min(aw/n,(ah-cfg.depth-20)/(n/2+1.7),240));TH=TW/2;};
   const RM=window.matchMedia&&matchMedia("(prefers-reduced-motion: reduce)").matches;
-  let PAD=2;const rotC=(cx,cy)=>(cx-=RX,cy-=RY,R==0?[cx,cy]:R==1?[RH-cy,cx]:R==2?[RW-cx,RH-cy]:[cy,RW-cx]);
-  const G=(gx,gy)=>[(gx-gy)*TW/2,(gx+gy)*TH/2];
+  let PAD=2;const rotC=(cx,cy)=>([cx,cy]=WP(cx,cy),cx-=RX,cy-=RY,R==0?[cx,cy]:R==1?[RH-cy,cx]:R==2?[RW-cx,RH-cy]:[cy,RW-cx]);
+  const G=(gx,gy)=>[(gx-gy)*TW/2,(gx+gy)*TH/2],TC=(x,y)=>{const c=G(...rotC(x+.5,y+.5));return [c[0],c[1]-TH/2];};
   function tree(cx,cy,v){const k=TW/58,r=[5,6.5,4.2][v]*k,h=[5,6.5,4][v]*k,t=cy-h;
     return `<g class="tr"><ellipse class="trs" cx="${cx}" cy="${cy}" rx="${r*.8}" ry="${r*.38}"/><rect class="trk" x="${cx-1.1*k}" y="${t}" width="${2.2*k}" height="${h}" rx="${1.1*k}"/><circle class="trc${v==2?" b2":""}" cx="${cx}" cy="${t-r*.75}" r="${r}"/></g>`;}
   // 마당: 집은 칸 뒤쪽으로 조금 작게, 울타리(앞쪽 왼편에 대문), 디딤돌, 마당 나무·꽃밭
@@ -277,18 +301,41 @@ function mkIso(root,cfg){
     let deco="";if(h%3==0)deco=tree(cx+a*.78,cy+b*.06,(h>>2)%2?2:0);else if(h%3==1){for(let i=0;i<4;i++){const p=L(S,E,.25+i*.15);deco+=`<circle class="fl f${(h+i)%3}" cx="${p[0]}" cy="${p[1]-b*.22}" r="${1.4*k}"/>`;}}
     return `<g class="hz" data-id="${j.id}"><ellipse class="hsh" cx="${hx+TW*.04}" cy="${hy+TH*.08}" rx="${TW*.3}" ry="${TH*.26}"/>${back}${ex}${h%3==0?"":deco}${iso(j,hx,hy,.74)}${h%3==0?deco:""}${front}</g>`;}
   // 가운데 큰 공원: 둘레 산책로, 가운데 분수 광장, 벤치, 둘레 나무
-  function bigPark(){const k=TW/58,{x,y,w,h}=PK,Q=pts=>P(pts.map(p=>G(...rotC(...p)))),c=G(...rotC(x+w/2,y+h/2)),o=[];
-    const ring=(m)=>{const pts=[];for(let i=0;i<40;i++){const an=i/40*Math.PI*2;pts.push([x+w/2+Math.cos(an)*(w/2-m),y+h/2+Math.sin(an)*(h/2-m)]);}return Q(pts);};
-    let base=`<polygon class="bpk-path" points="${ring(.55)}"/><polygon class="pkg2" points="${ring(.85)}"/>`;
-    const pl=[];for(let i=0;i<24;i++){const an=i/24*Math.PI*2;pl.push([x+w/2+Math.cos(an)*.95,y+h/2+Math.sin(an)*.95]);}base+=`<polygon class="plz" points="${Q(pl)}"/>`;
-    [[0,1],[0,-1],[1,0],[-1,0]].forEach(([u,v])=>base+=`<polygon class="bpk-path" points="${Q([[x+w/2+u*.9-v*.18,y+h/2+v*.9+u*.18],[x+w/2+u*(w/2-.55)-v*.18,y+h/2+v*(h/2-.55)+u*.18],[x+w/2+u*(w/2-.55)+v*.18,y+h/2+v*(h/2-.55)-u*.18],[x+w/2+u*.9+v*.18,y+h/2+v*.9-u*.18]])}"/>`);
+  function bigPark(lv){/* 공원 키우기 (04 2026-11-03 "땅을 채울수록 더 커지게, 발전되게"): lv 1 잔디+작은 분수 → 2 둘레 산책로·벤치 → 3 광장·십자길·나무 가득 → 4 큰 분수·꽃밭·가로등 */lv=window.__pkLv||lv||4;const k=TW/58,{x,y,w,h}=PK,Q=pts=>P(SUBD(pts).map(p=>G(...rotC(...p)))),c=G(...rotC(x+w/2,y+h/2)),o=[];
+    const ring=(m)=>{const pts=[];for(let i=0;i<40;i++){const an=i/40*Math.PI*2;const cq=Math.max(Math.abs(Math.cos(an)),Math.abs(Math.sin(an)));/* 동그란 공원 비틀기를 거치면 원이 되게 미리 네모로 */pts.push([x+w/2+Math.cos(an)*(w/2-m),y+h/2+Math.sin(an)*(h/2-m)]);}return Q(pts);};
+    /* 동그란 공원: 네 모서리 교차로를 지나는 큰 원형 길(곧은 길은 그대로 이어짐) + 그 안 둥근 땅 */const RR=(w/2+.5)*Math.SQRT2,hw=.3,rg=(r)=>ring(w/2-r);let base=`<polygon class="sw" points="${rg(RR+hw+.07)}"/><polygon class="rds" points="${rg(RR+hw)}"/><polygon class="sw" points="${rg(RR-hw)}"/><polygon class="pkg" points="${rg(RR-hw-.07)}"/><polygon class="cl" style="fill:none" points="${rg(RR)}"/>`;/* 원형 길과 곧은 길이 만나는 네 곳은 연석 선을 지우고 한 길로 이어지게 (04 2026-11-03 "선 없애고 도로 합쳐") */[[x-1,y-1,-1,-1],[x+w,y-1,1,-1],[x-1,y+h,-1,1],[x+w,y+h,1,1]].forEach(([tx,ty,dx,dy])=>{const A=.5-hw,B=.5+hw;const dk=[];for(let i=0;i<24;i++){const an=i/24*Math.PI*2;dk.push([tx+.5+Math.cos(an)*hw,ty+.5+Math.sin(an)*hw]);}const okA=(a,b)=>!inMR(a,b)&&!CAS.has(a+","+b);base+=`<polygon class="rds" points="${Q(dk)}"/>${!okA(tx+dx,ty)?"":`<polygon class="rds" points="${Q(dx<0?[[tx-.6,ty+A],[tx+.5,ty+A],[tx+.5,ty+B],[tx-.6,ty+B]]:[[tx+.5,ty+A],[tx+1.6,ty+A],[tx+1.6,ty+B],[tx+.5,ty+B]])}"/>`}${!okA(tx,ty+dy)?"":`<polygon class="rds" points="${Q(dy<0?[[tx+A,ty-.6],[tx+B,ty-.6],[tx+B,ty+.5],[tx+A,ty+.5]]:[[tx+A,ty+.5],[tx+B,ty+.5],[tx+B,ty+1.6],[tx+A,ty+1.6]])}"/>`}`;});if(lv>=2)base+=`<polygon class="bpk-path" points="${ring(.75)}"/><polygon class="pkg2" points="${ring(1.0)}"/>`;
+    const pl=[];for(let i=0;i<40;i++){const an=i/40*Math.PI*2;const cq=Math.max(Math.abs(Math.cos(an)),Math.abs(Math.sin(an)));pl.push([x+w/2+Math.cos(an)*.95,y+h/2+Math.sin(an)*.95]);}if(lv>=3)base+=`<polygon class="plz" points="${Q(pl)}"/>`;
+    if(lv>=3)[[0,1],[0,-1],[1,0],[-1,0]].forEach(([u,v])=>base+=`<polygon class="bpk-path" points="${Q([[x+w/2+u*.9-v*.18,y+h/2+v*.9+u*.18],[x+w/2+u*(w/2-.55)-v*.18,y+h/2+v*(h/2-.55)+u*.18],[x+w/2+u*(w/2-.55)+v*.18,y+h/2+v*(h/2-.55)-u*.18],[x+w/2+u*.9+v*.18,y+h/2+v*.9-u*.18]])}"/>`);
     const ft=`<g class="ftn"><ellipse class="ftb" cx="${c[0]}" cy="${c[1]+2*k}" rx="${TW*.42}" ry="${TH*.42}"/><ellipse class="ftw" cx="${c[0]}" cy="${c[1]}" rx="${TW*.36}" ry="${TH*.36}"/><rect class="ftp" x="${c[0]-2*k}" y="${c[1]-12*k}" width="${4*k}" height="${12*k}" rx="${1.5*k}"/><ellipse class="ftw2" cx="${c[0]}" cy="${c[1]-12*k}" rx="${7*k}" ry="${3*k}"/><path class="ftj" d="M${c[0]} ${c[1]-13*k}q${-5*k} ${-8*k} ${-9*k} ${2*k}M${c[0]} ${c[1]-13*k}q${5*k} ${-8*k} ${9*k} ${2*k}"/></g>`;
-    const items=[{gx:x+w/2,gy:y+h/2,s:ft}];
-    const NT=Math.max(14,Math.round((w+h)*1.3));for(let i=0;i<NT;i++){const an=i/NT*Math.PI*2+.2,r=.5+((i*7)%3)*.06,gx=x+w/2+Math.cos(an)*(w/2-.3)*(.9+r*.1),gy=y+h/2+Math.sin(an)*(h/2-.3)*(.9+r*.1),p=G(...rotC(gx,gy));items.push({gx,gy,s:tree(p[0],p[1],i%3)});}
-    [[.5,-1.7],[-.5,1.7],[1.7,.5],[-1.7,-.5]].forEach(([u,v])=>{const gx=x+w/2+u*(w/4),gy=y+h/2+v*(h/4)/1.7,p=G(...rotC(gx,gy));items.push({gx,gy,s:`<g transform="translate(${p[0]},${p[1]})">${bench(k)}</g>`});});
+    const fs=[.6,.8,1,1.4][lv-1];const items=[{gx:x+w/2,gy:y+h/2,s:`<g transform="translate(${c[0]},${c[1]}) scale(${fs}) translate(${-c[0]},${-c[1]})">${ft}</g>`}];
+    if(lv>=4){const FC=["#f28b82","#fbbc04","#f6aea9","#c58af9","#ffffff"];for(let i=0;i<28;i++){const an=i/28*Math.PI*2,rr=1.25+(i%2)*.12,gx=x+w/2+Math.cos(an)*rr,gy=y+h/2+Math.sin(an)*rr,p=G(...rotC(gx,gy));items.push({gx,gy,s:`<ellipse cx="${p[0]}" cy="${p[1]}" rx="${3.2*k}" ry="${1.8*k}" fill="${FC[i%5]}" stroke="#0002" stroke-width=".5"/>`});}
+      [[1,1],[-1,1],[1,-1],[-1,-1]].forEach(([u,v])=>{const gx=x+w/2+u*1.6,gy=y+h/2+v*1.6,p=G(...rotC(gx,gy));items.push({gx,gy,s:`<g><rect x="${p[0]-.8*k}" y="${p[1]-16*k}" width="${1.6*k}" height="${16*k}" fill="#5b5b5b"/><circle cx="${p[0]}" cy="${p[1]-17*k}" r="${2.6*k}" fill="#fff6c8" stroke="#5b5b5b" stroke-width="${.8*k}"/></g>`});});}
+    const NT0=Math.max(14,Math.round((w+h)*1.3)),NT=[5,9,NT0,NT0+4][lv-1];for(let i=0;i<NT;i++){const an=i/NT*Math.PI*2+.2,r=.5+((i*7)%3)*.06,gx=x+w/2+Math.cos(an)*(w/2-.3)*(.9+r*.1),gy=y+h/2+Math.sin(an)*(h/2-.3)*(.9+r*.1),p=G(...rotC(gx,gy));items.push({gx,gy,s:tree(p[0],p[1],i%3)});}
+    [[.5,-1.7],[-.5,1.7],[1.7,.5],[-1.7,-.5]].slice(0,[0,2,4,4][lv-1]).forEach(([u,v])=>{const gx=x+w/2+u*(w/4),gy=y+h/2+v*(h/4)/1.7,p=G(...rotC(gx,gy));items.push({gx,gy,s:`<g transform="translate(${p[0]},${p[1]})">${bench(k)}</g>`});});
+    /* 공원 시안 B·C·D (04 2026-11-03 "공원 시안 더 뽑아줘"): window.__pkSt로 미리보기 */const st=window.__pkSt||"A";
+    if(st!=="A"){const cx=x+w/2,cy=y+h/2,LR=RR-hw-.07,pc=(r,n=48,ox=0,oy=0,ry)=>{const o=[];for(let i=0;i<n;i++){const an=i/n*Math.PI*2;o.push([cx+ox+Math.cos(an)*r,cy+oy+Math.sin(an)*(ry||r)]);}return o;},at=(gx,gy,sv)=>{const p=G(...rotC(gx,gy));items2.push({gx,gy,s:sv(p[0],p[1])});},items2=[];
+      base=base.split('<polygon class="bpk-path"')[0];/* 원형 길·잔디까지만 남기고 속은 새로 */
+      const FC=["#f28b82","#fbbc04","#f6aea9","#c58af9","#ffffff","#ff8a65"];
+      if(st==="B"){/* 호수 공원 */base+=`<polygon class="bpk-path" points="${Q(pc(2.45))}"/><polygon class="pkg" points="${Q(pc(2.25))}"/><polygon class="ftb" points="${Q(pc(1.75,48,.15,.1,1.35))}"/><polygon class="ftw" points="${Q(pc(1.6,48,.15,.1,1.2))}"/><polygon class="pkg2" points="${Q(pc(.38,24,.75,-.35))}"/><polygon style="fill:#b5835a;stroke:#7a5233;stroke-width:1" points="${Q([[cx-1.55,cy+.35],[cx-.1,cy+.35],[cx-.1,cy+.62],[cx-1.55,cy+.62]])}"/>`;
+        at(cx+.75,cy-.35,(px,py)=>tree(px,py,0));for(let i=0;i<22;i++){const an=i/22*Math.PI*2+.1,rr=2.75+(i%3)*.12;at(cx+Math.cos(an)*rr,cy+Math.sin(an)*rr,(px,py)=>tree(px,py,i%3));}
+        [[0,-2.05],[1.9,.6],[-1.6,-1.3]].forEach(([u,v])=>at(cx+u,cy+v,(px,py)=>`<g transform="translate(${px},${py})">${bench(k)}</g>`));
+        for(let i=0;i<5;i++){const an=1+i*.5;at(cx+.15+Math.cos(an)*1.3,cy+.1+Math.sin(an)*1.0,(px,py)=>`<ellipse cx="${px}" cy="${py}" rx="${3*k}" ry="${1.3*k}" fill="#6fbf73" stroke="#3d8f3a" stroke-width=".6"/>`);}}
+      else if(st==="C"){/* 꽃 정원 + 정자 */base+=`<polygon class="bpk-path" points="${Q(pc(2.5))}"/><polygon class="pkg" points="${Q(pc(2.3))}"/>`;[[1,0],[0,1],[-1,0],[0,-1]].forEach(([u,v])=>base+=`<polygon class="bpk-path" points="${Q([[cx+u*.6-v*.2,cy+v*.6+u*.2],[cx+u*2.4-v*.2,cy+v*2.4+u*.2],[cx+u*2.4+v*.2,cy+v*2.4-u*.2],[cx+u*.6+v*.2,cy+v*.6-u*.2]])}"/>`);base+=`<polygon class="plz" points="${Q(pc(.75))}"/>`;
+        [1.15,1.6,2.05].forEach((rr,j)=>{const n=Math.round(rr*14);for(let i=0;i<n;i++){const an=i/n*Math.PI*2+j*.2;if(Math.abs(Math.sin(2*an))<.22)continue;at(cx+Math.cos(an)*rr,cy+Math.sin(an)*rr,(px,py)=>`<ellipse cx="${px}" cy="${py}" rx="${3.4*k}" ry="${2*k}" fill="${FC[(i+j)%6]}" stroke="#0002" stroke-width=".5"/>`);}});
+        at(cx,cy,(px,py)=>{const R=11*k,H=16*k;let pil="";[-1,1].forEach(sx=>pil+=`<rect x="${px+sx*R*.7-1.2*k}" y="${py-H}" width="${2.4*k}" height="${H}" fill="#f4efe6" stroke="#8a7b6a" stroke-width=".7"/>`);return `<g><ellipse cx="${px}" cy="${py}" rx="${R*1.05}" ry="${R*.55}" fill="#e9e2d4" stroke="#8a7b6a" stroke-width=".7"/>${pil}<polygon points="${px-R*1.25},${py-H} ${px},${py-H-11*k} ${px+R*1.25},${py-H} ${px},${py-H+5*k}" fill="#c0504d" stroke="#7a2e2c" stroke-width=".8"/></g>`;});
+        for(let i=0;i<18;i++){const an=i/18*Math.PI*2+.15;at(cx+Math.cos(an)*2.8,cy+Math.sin(an)*2.8,(px,py)=>tree(px,py,i%3));}}
+      else{/* D 잔디 광장 + 큰 나무 + 놀이터 */base+=`<polygon class="bpk-path" points="${Q(pc(2.6))}"/><polygon class="pkg" points="${Q(pc(2.4))}"/><polygon class="pkg2" points="${Q(pc(1.9))}"/>`;
+        [[-.9,.7,"#f28b82"],[.6,1.1,"#fbbc04"],[1.1,-.3,"#8ab4f8"]].forEach(([u,v,c2])=>base+=`<polygon style="fill:${c2};opacity:.9" points="${Q([[cx+u-.28,cy+v-.2],[cx+u+.28,cy+v-.2],[cx+u+.28,cy+v+.2],[cx+u-.28,cy+v+.2]])}"/>`);
+        base+=`<polygon style="fill:#e8d9b5" points="${Q(pc(.65,32,-1.1,-1.0))}"/>`;
+        at(cx,cy,(px,py)=>`<g transform="translate(${px},${py}) scale(1.9) translate(${-px},${-py})">${tree(px,py,0)}</g>`);
+        at(cx-1.1,cy-1.0,(px,py)=>`<g><path d="M${px-8*k} ${py}L${px-8*k} ${py-14*k}L${px+8*k} ${py}" fill="none" stroke="#e5534b" stroke-width="${2*k}"/><path d="M${px-10*k} ${py-14*k}L${px-6*k} ${py-14*k}" stroke="#555" stroke-width="${1.2*k}"/><rect x="${px+2*k}" y="${py-12*k}" width="${1.2*k}" height="${12*k}" fill="#555"/><rect x="${px+9*k}" y="${py-12*k}" width="${1.2*k}" height="${12*k}" fill="#555"/><rect x="${px+2*k}" y="${py-12.5*k}" width="${8*k}" height="${1.2*k}" fill="#555"/><rect x="${px+4.5*k}" y="${py-5*k}" width="${3*k}" height="${1.2*k}" fill="#fbbc04"/></g>`);
+        for(let i=0;i<20;i++){const an=i/20*Math.PI*2+.3;at(cx+Math.cos(an)*2.85,cy+Math.sin(an)*2.85,(px,py)=>tree(px,py,i%3));}
+        [[1.9,.9],[-1.9,.6],[.2,-2.1],[.9,2.0]].forEach(([u,v])=>at(cx+u,cy+v,(px,py)=>`<g transform="translate(${px},${py})">${bench(k)}</g>`));}
+      items.length=0;items.push(...items2);}
+    /* 공원으로 건너가는 횡단보도 (04 2026-11-03): 원형 길 위 네 방향 + 공원 안으로 이어지는 짧은 길 */{const cx=x+w/2,cy=y+h/2,pa=(r,an)=>[cx+Math.cos(an)*r,cy+Math.sin(an)*r];[0,Math.PI/2,Math.PI,Math.PI*1.5].forEach(an=>{const da=.19/RR;{const bk=[];for(let j=0;j<=6;j++)bk.push(pa(RR-hw+.01,an-da*1.15+j*da*2.3/6));for(let j=6;j>=0;j--)bk.push(pa(RR+hw-.01,an-da*1.15+j*da*2.3/6));base+=`<polygon class="rds" points="${Q(bk)}"/>`;}for(let i=0;i<4;i++){const r0=RR-hw+.06+i*.135,r1=r0+.08;base+=`<polygon class="zb" points="${Q([pa(r0,an-da),pa(r1,an-da),pa(r1,an+da),pa(r0,an+da)])}"/>`;}const t=.16/RR,ri=RR-hw-.07,ro2=(st==="A"?w/2-.6:2.3);if(ri>ro2)base+=`<polygon class="bpk-path" points="${Q([pa(ro2,an-t*1.3),pa(ri+.02,an-t),pa(ri+.02,an+t),pa(ro2,an+t*1.3)])}"/>`;});}
     const r=[{o:-1,y:-1e9,s:`<g class="bpk">${base}</g>`}];items.forEach(it=>{const q=rotC(it.gx,it.gy);r.push({o:q[0]+q[1]-1,y:G(...q)[1],s:it.s});});return r;}
   // 공원 위아래 정원: 가운데 곧은 산책로, 양옆 가로수 줄, 벤치
-  function garden(q){const {x,y,w,h}=q,Q=pts=>P(pts.map(p=>G(...rotC(...p)))),k=TW/58,cx=x+w/2,r=[];
+  function garden(q){const {x,y,w,h}=q,Q=pts=>P(SUBD(pts).map(p=>G(...rotC(...p)))),k=TW/58,cx=x+w/2,r=[];
     r.push({o:-1,y:-1e9,s:`<polygon class="pkg2" points="${Q([[x+.15,y+.15],[x+w-.15,y+.15],[x+w-.15,y+h-.15],[x+.15,y+h-.15]])}"/><polygon class="bpk-path" points="${Q([[cx-.22,y],[cx+.22,y],[cx+.22,y+h],[cx-.22,y+h]])}"/>`});
     for(let t=.5;t<h;t+=1)[cx-.8,cx+.8,x+.45,x+w-.45].forEach((gx,i)=>{if(i>1&&hsh(Math.round(t*10)+i*7+y)%2)return;const q2=rotC(gx,y+t),p=G(...q2);r.push({o:q2[0]+q2[1]-1,y:p[1],s:tree(p[0],p[1],i%2?0:2)});});
     {const q2=rotC(cx+.45,y+h/2),p=G(...q2);r.push({o:q2[0]+q2[1]-1,y:p[1],s:`<g transform="translate(${p[0]},${p[1]})">${bench(k)}</g>`});}
@@ -337,44 +384,68 @@ function mkIso(root,cfg){
     else if(v%5==1)s+=`<g transform="translate(${5*k},0)"><ellipse class="crs" cx="0" cy="0" rx="${2.2*k}" ry="${.9*k}"/><ellipse cx="0" cy="${-1.8*k}" rx="${2.2*k}" ry="${1.3*k}" style="fill:#c9935f"/><circle cx="${1.9*k}" cy="${-3*k}" r="${1.1*k}" style="fill:#c9935f"/><line x1="${-1.2*k}" y1="${-6*k}" x2="${1.8*k}" y2="${-3.4*k}" class="leash"/></g>`;
     return s;}
   function traffic(){let o="",n=0;const PLc=MIFFY?vpNow().r.slice(0,4):(()=>{try{return DB.skin.pal&&DB.skin.pal()}catch(e){return null}})()||["var(--r1)","var(--r2)","var(--r3)","var(--r4)"];
-    const lines=[];RDX.forEach(x=>{if(x<GX)rdSegs(x,'x',0,GY).forEach(([u,v])=>{if(v-u>1.5)lines.push({a:[x+.5,u],b:[x+.5,v-.001],v:1});});});RDY.forEach(y=>{if(y<GY)rdSegs(y,'y',0,GX).forEach(([u,v])=>{if(v-u>1.5)lines.push({a:[u,y+.5],b:[v-.001,y+.5],v:0});});});
+    const lines=[],cs=(f,vt,sg)=>{const o=[];sg.forEach(([u,v])=>{let a=null;for(let t=u;t<=v;t++){const ok=t<v&&!CAS.has(vt?f+","+t:t+","+f);if(ok&&a==null)a=t;if(!ok&&a!=null){o.push([a,t]);a=null;}}});return o;};/* 없앤 길(공원 둘레 등) 위로는 차가 안 다니게 */RDX.forEach(x=>{if(x<GX)cs(x,1,rdSegs(x,'x',0,GY)).forEach(([u,v])=>{if(v-u>1.5)lines.push({a:[x+.5,u],b:[x+.5,v-.001],v:1});});});RDY.forEach(y=>{if(y<GY)cs(y,0,rdSegs(y,'y',0,GX)).forEach(([u,v])=>{if(v-u>1.5)lines.push({a:[u,y+.5],b:[v-.001,y+.5],v:0});});});
     lines.forEach((ln,i)=>{const len=Math.hypot(ln.b[0]-ln.a[0],ln.b[1]-ln.a[1]);
       [1,-1].forEach(dir=>{if(hsh(i*11+dir*3)%3==0)return;const off=.14*dir,A=ln.v?[ln.a[0]+off,ln.a[1]]:[ln.a[0],ln.a[1]-off],B=ln.v?[ln.b[0]+off,ln.b[1]]:[ln.b[0],ln.b[1]-off];
-        let [s0,s1]=dir>0?[A,B]:[B,A];s0=rotC(...s0);s1=rotC(...s1);const ux=Math.sign(Math.round(s1[0]-s0[0])),uy=Math.sign(Math.round(s1[1]-s0[1]));
+        let [s0,s1]=dir>0?[A,B]:[B,A];const w0=s0,w1=s1;s0=rotC(...s0);s1=rotC(...s1);const ux=Math.sign(Math.round(s1[0]-s0[0])),uy=Math.sign(Math.round(s1[1]-s0[1]));
         const p0=G(...s0),p1=G(...s1),dur=(len*1.6).toFixed(1),bg=-(hsh(i*5+dir)%100)/100*len*1.6;
-        const f=.1+(hsh(i*5+dir)%80)/100,qx=s0[0]+(s1[0]-s0[0])*f,qy=s0[1]+(s1[1]-s0[1])*f,cy=p0[1]+(p1[1]-p0[1])*f;DYN.push({o:qx+qy-1,y:cy,s:`<g class="car" transform="translate(${p0[0]+(p1[0]-p0[0])*f},${cy})">${car(ux,uy,PLc[(n++)%PLc.length])}</g>`});});
+        const f=.1+(hsh(i*5+dir)%80)/100,pw=G(...rotC(w0[0]+(w1[0]-w0[0])*f,w0[1]+(w1[1]-w0[1])*f)),qx=s0[0]+(s1[0]-s0[0])*f,qy=s0[1]+(s1[1]-s0[1])*f,cy=pw[1];DYN.push({o:qx+qy-1,y:cy,s:`<g class="car" transform="translate(${pw[0]},${cy})">${car(ux,uy,PLc[(n++)%PLc.length])}</g>`});});
       // 산책: 길 가장자리 인도에서 몇 칸 왔다 갔다
       for(let w=0;w<0;w++){const h=hsh(i*23+w*7);if(h%2)continue;const st=(h%Math.max(1,Math.floor(len-4)))+1,sl=2+h%3,side=(w?.44:-.44);
         const A=ln.v?[ln.a[0]+side,st]:[st,ln.a[1]+side],B=ln.v?[ln.a[0]+side,st+sl]:[st+sl,ln.a[1]+side],p0=G(...rotC(...A)),p1=G(...rotC(...B)),dur=(sl*4.5).toFixed(1);
         o+=`<g class="wk" transform="translate(${(p0[0]+p1[0])/2},${(p0[1]+p1[1])/2})">${walker(h)}</g>`;}});
     return `<g class="trf">${roadDeco()}${o}</g>`;}
   // 도로: 인도 턱, 가운데 점선, 교차로 옆 횡단보도
-  function roadDeco(){const Q=pts=>P(pts.map(p=>G(...rotC(...p))));let d="",cl="";
+  function roadDeco(){const Q=pts=>P(SUBD(pts).map(p=>G(...rotC(...p))));let d="",cl="";
     const isI=(x,y)=>RDX.has(x)&&RDY.has(y),RI=.2;// 길은 칸 가운데 60%만(양옆은 잔디)
-    const a0=-PAD,ax=GX+PAD,ay=GY+PAD,BB=BRL(),okR=(x,y)=>(x>=0&&y>=0&&x<GX&&y<GY)||RSET.has(x+","+y);
+    const a0=-PAD,ax=GX+PAD,ay=GY+PAD,BB=BRL(),okR=(x,y)=>!CAS.has(x+","+y)&&((x>=0&&y>=0&&x<GX&&y<GY)||RSET.has(x+","+y));
     const clip=(segs,f,vert)=>{const o=[];segs.forEach(([a,b])=>{let s0=null;for(let t=Math.ceil(a);t<b;t++){const ok=vert?okR(f,t):okR(t,f);if(ok&&s0==null)s0=t;if(!ok&&s0!=null){o.push([s0,t]);s0=null;}}if(s0!=null)o.push([s0,b]);});return o;};
     let brg="";
     // 바깥 동네 길도 마을 길과 같은 간격(5칸마다)·같은 모양으로
     const ext=(lo,hi)=>{const o=[];for(let v=Math.ceil(lo);v<=hi;v++)if(((v%5)+5)%5==4)o.push(v);return o;},EX=ext(a0,ax-1),EY=ext(a0,ay-1);
     // 가운데 점선은 교차로 칸에서 끊음
-    const noI=(a,b,L)=>{const o=[];let c=a;L.forEach(t=>{if(t+1.6<=c||t-.6>=b)return;if(t-.6>c)o.push([c,t-.6]);c=Math.max(c,t+1.6);});if(b>c)o.push([c,b]);return o.filter(([u,v])=>v-u>.25);};// 교차로 양옆 횡단보도 칸까지 점선 끊음
-    const EYs=new Set(EY),EXs=new Set(EX);EX.forEach(x=>{const segs=clip(rdSegs(x,'x',a0,ay),x,1);segs.forEach(([y0,y1])=>{for(let t=y0;t<y1;t++)if(ZN(x,t)==1)brg+=`<polygon class="brg" points="${Q([[x+RI-.12,t],[x+1-RI+.12,t],[x+1-RI+.12,t+1],[x+RI-.12,t+1]])}"/><path class="rail" d="M${G(...rotC(x+RI-.08,t))}L${G(...rotC(x+RI-.08,t+1))}M${G(...rotC(x+1-RI+.08,t))}L${G(...rotC(x+1-RI+.08,t+1))}"/>`;if(EYs.has(y0))y0+=RI;if(EYs.has(y1-1))y1-=RI;noI(y0,y1,EY).forEach(([u,v])=>cl+=`M${G(...rotC(x+.5,u))}L${G(...rotC(x+.5,v))}`);
-      d+=`<polygon class="rds" points="${Q([[x+RI,y0],[x+1-RI,y0],[x+1-RI,y1],[x+RI,y1]])}"/><polygon class="sw" points="${Q([[x+RI,y0],[x+RI+.07,y0],[x+RI+.07,y1],[x+RI,y1]])}"/><polygon class="sw" points="${Q([[x+1-RI-.07,y0],[x+1-RI,y0],[x+1-RI,y1],[x+1-RI-.07,y1]])}"/>`;});});
-    EY.forEach(y=>{clip(rdSegs(y,'y',a0,ax),y,0).forEach(([x0,x1])=>{for(let t=x0;t<x1;t++)if(ZN(t,y)==1)brg+=`<polygon class="brg" points="${Q([[t,y+RI-.12],[t+1,y+RI-.12],[t+1,y+1-RI+.12],[t,y+1-RI+.12]])}"/><path class="rail" d="M${G(...rotC(t,y+RI-.08))}L${G(...rotC(t+1,y+RI-.08))}M${G(...rotC(t,y+1-RI+.08))}L${G(...rotC(t+1,y+1-RI+.08))}"/>`;if(EXs.has(x0))x0+=RI;if(EXs.has(x1-1))x1-=RI;noI(x0,x1,EX).forEach(([u,v])=>cl+=`M${G(...rotC(u,y+.5))}L${G(...rotC(v,y+.5))}`);
-      d+=`<polygon class="rds" points="${Q([[x0,y+RI],[x1,y+RI],[x1,y+1-RI],[x0,y+1-RI]])}"/><polygon class="sw" points="${Q([[x0,y+RI],[x1,y+RI],[x1,y+RI+.07],[x0,y+RI+.07]])}"/><polygon class="sw" points="${Q([[x0,y+1-RI-.07],[x1,y+1-RI-.07],[x1,y+1-RI],[x0,y+1-RI]])}"/>`;});});
-    // 교차로 칸은 인도 지우기(길 색으로 덮음)
-    EX.forEach(x=>EY.forEach(y=>{if(inMR(x,y)||!okR(x,y))return;d+=`<polygon class="ix" points="${Q([[x+RI,y+RI],[x+1-RI,y+RI],[x+1-RI,y+1-RI],[x+RI,y+1-RI]])}"/>`;
+    const noI=(a,b,L)=>{const o=[];let c=a;L.forEach(t=>{if(t+1.85<=c||t-.85>=b)return;if(t-.85>c)o.push([c,t-.85]);c=Math.max(c,t+1.85);});if(b>c)o.push([c,b]);return o.filter(([u,v])=>v-u>.25);};// 교차로 양옆 횡단보도 칸까지 점선 끊음
+    // 굽은 구간: 바깥 동네 교차로~교차로 사이 몇 곳을 S자로 굽힘 (04 2026-11-03 "곡선으로 도는 구간")
+    const CVT=new Set(),CVL=(vert,f,a,b,L)=>{const g=[];return g;/* 바깥 S자 길은 뺌 (04 2026-11-03 "꾸불거리는 도로는 다 빼줘") */L.forEach(k=>{const c=k+.5,e=c+5;if(c<a-.01||e>b+.01)return;const inG=vert?(f>=-1&&f<=GX&&e>-1&&c<GY+1):(f>=-1&&f<=GY&&e>-1&&c<GX+1);if(inG||hsh(f*31+k*17+(vert?7:3))%2)return;for(let t=Math.floor(c);t<e;t++)if(vert?ZN(f,t):ZN(t,f))return;g.push([c,e,hsh(f*3+k)%2?1:-1]);for(let t=Math.floor(c);t<e;t++)CVT.add(vert?f+","+t:t+","+f);});return g;};
+    const off=(g,t)=>{for(const [c,e,sg] of g)if(t>c&&t<e)return sg*.42*Math.sin(Math.PI*2*(t-c)/5);return 0;};
+    const strip=(vert,f,a,b,cls,L)=>{const g=CVL(vert,f,a,b,L),P2=(u,t)=>vert?[f+u+off(g,t),t]:[t,f+u+off(g,t)],ts=[];for(let t=a;t<b;t+=.25)ts.push(t);ts.push(b);
+      const band=(u0,u1)=>P(ts.map(t=>P2(u0,t)).concat(ts.slice().reverse().map(t=>P2(u1,t))).map(p=>G(...rotC(...p))));
+      let c="";cls.forEach(([u,v])=>{const q=[u];for(let t=Math.ceil(u*4)/4+.25;t<v;t+=.25)q.push(t);q.push(v);c+="M"+q.map(t=>G(...rotC(...P2(.5,t)))).join("L");});
+      return [`<polygon class="rds" points="${band(RI,1-RI)}"/><polygon class="sw" points="${band(RI,RI+.07)}"/><polygon class="sw" points="${band(1-RI-.07,1-RI)}"/>`,c];};
+    /* 막다른 길 끝은 둥글게 (04 2026-11-03 "합쳐진 블록 옆 끊긴 길 동그랗게 메꿔") */const CAP=(vert,f,t,dir)=>{const hw=.5-RI,pt=(r,an)=>vert?[f+.5+Math.cos(an)*r,t+dir*Math.sin(an)*r]:[t+dir*Math.sin(an)*r,f+.5+Math.cos(an)*r],arc=(r)=>{const o=[];for(let i=0;i<=16;i++)o.push(pt(r,i/16*Math.PI));return o;};return `<polygon class="sw" points="${Q(arc(hw+.07).concat(arc(hw).reverse()))}"/><polygon class="rds" points="${Q(arc(hw))}"/>`;};
+    const EYs=new Set(EY),EXs=new Set(EX);EX.forEach(x=>{const segs=clip(rdSegs(x,'x',a0,ay),x,1);segs.forEach(([y0,y1])=>{for(let t=y0;t<y1;t++)if(ZN(x,t)==1)brg+=`<polygon class="brg" points="${Q([[x+RI-.12,t],[x+1-RI+.12,t],[x+1-RI+.12,t+1],[x+RI-.12,t+1]])}"/><path class="rail" d="M${G(...rotC(x+RI-.08,t))}L${G(...rotC(x+RI-.08,t+1))}M${G(...rotC(x+1-RI+.08,t))}L${G(...rotC(x+1-RI+.08,t+1))}"/>`;if(EYs.has(y0))y0+=CNK.has(x+","+y0)?1-RI:RI;/* 둥근 모퉁이 칸은 칸 앞에서 멈춤 */else if(y0>a0+1){y0+=.37;d+=CAP(1,x,y0,-1);}if(EYs.has(y1-1))y1-=CNK.has(x+","+(y1-1))?1-RI:RI;else if(y1<ay-1){y1-=.37;d+=CAP(1,x,y1,1);}{const [q,c]=strip(1,x,y0,y1,noI(y0,y1,EY),EY);d+=q;cl+=c;}});});
+    EY.forEach(y=>{clip(rdSegs(y,'y',a0,ax),y,0).forEach(([x0,x1])=>{for(let t=x0;t<x1;t++)if(ZN(t,y)==1)brg+=`<polygon class="brg" points="${Q([[t,y+RI-.12],[t+1,y+RI-.12],[t+1,y+1-RI+.12],[t,y+1-RI+.12]])}"/><path class="rail" d="M${G(...rotC(t,y+RI-.08))}L${G(...rotC(t+1,y+RI-.08))}M${G(...rotC(t,y+1-RI+.08))}L${G(...rotC(t+1,y+1-RI+.08))}"/>`;if(EXs.has(x0))x0+=CNK.has(x0+","+y)?1-RI:RI;else if(x0>a0+1){x0+=.37;d+=CAP(0,y,x0,-1);}if(EXs.has(x1-1))x1-=CNK.has((x1-1)+","+y)?1-RI:RI;else if(x1<ax-1){x1-=.37;d+=CAP(0,y,x1,1);}{const [q,c]=strip(0,y,x0,x1,noI(x0,x1,EX),EX);d+=q;cl+=c;}});});
+    // 교차로 칸은 인도 지우기(길 색으로 덮음). DN: 변을 잘게 나눠 굽은 모퉁이(WP)를 따라 휘게 (04 11-03 연석 톱니)
+    const DN=(p,n=8)=>{const o=[];for(let k=0;k<p.length;k++){const a=p[k],b=p[(k+1)%p.length];for(let t=0;t<n;t++)o.push([a[0]+(b[0]-a[0])*t/n,a[1]+(b[1]-a[1])*t/n]);}return o;};
+    EX.forEach(x=>EY.forEach(y=>{if(inMR(x,y)||!okR(x,y))return;{const c=(px,py,vert)=>vert?clip(rdSegs(px,'x',a0,ay),px,1).some(([u,v])=>py>=u&&py<v):clip(rdSegs(py,'y',a0,ax),py,0).some(([u,v])=>px>=u&&px<v),n=c(x,y-1,1),s_=c(x,y+1,1),w_=c(x-1,y,0),e=c(x+1,y,0);if(n&&s_&&!w_&&!e||w_&&e&&!n&&!s_)return;/* 곧게 지나가는 칸은 덮지 않음: 굽은 길에서 연석 톱니 생김 (04 11-03) */const ck=CNK.has(x+","+y),o=.025,oh=.025,q=.035,X0=x+RI+(w_?-oh:q),X1=x+1-RI+(e?oh:-q),Y0=y+RI+(n?-o:q),Y1=y+1-RI+(s_?o:-q);/* 둥근 모퉁이 칸: 안쪽 꼭짓점이 연석 밖으로 안 튀게 *//* 막힌 쪽은 연석 안쪽까지만 *//* 길 있는 쪽으로 살짝 넓혀 연석 테두리 실선 안 비치게 */if(ck){/* 둥근 모퉁이 칸 (04 11-03 연석 톱니): 길은 칸 앞에서 멈추고, 칸 안은 네모 + 길 쪽 혀(연석 사이만)로 메움 */const A=x+RI,B=x+1-RI,A2=y+RI,B2=y+1-RI,w=.095,t=.03;let P=[[A,A2]];if(n)P.push([A+w,A2],[A+w,A2-t],[B-w,A2-t],[B-w,A2]);P.push([B,A2]);if(e)P.push([B,A2+w],[B+t,A2+w],[B+t,B2-w],[B,B2-w]);P.push([B,B2]);if(s_)P.push([B-w,B2],[B-w,B2+t],[A+w,B2+t],[A+w,B2]);P.push([A,B2]);if(w_)P.push([A,B2-w],[A-t,B2-w],[A-t,A2+w],[A,A2+w]);const P2=[];P.forEach((p,k)=>{const q=P[(k+1)%P.length];for(let u=0;u<4;u++)P2.push([p[0]+(q[0]-p[0])*u/4,p[1]+(q[1]-p[1])*u/4]);});d+=`<polygon class="ix nf" points="${Q(P2)}"/>`;}else d+=`<polygon class="ix" points="${Q(DN([[X0,Y0],[X1,Y0],[X1,Y1],[X0,Y1]],4))}"/>`;}
       // 막힌 쪽(T자 교차로)은 인도 턱을 이어서 길이 끝난 게 아니라 꺾인 것처럼
       const w=.07,A=RI,B=1-RI;const cov=(px,py,vert)=>vert?clip(rdSegs(px,'x',a0,ay),px,1).some(([u,v])=>py>=u&&py<v):clip(rdSegs(py,'y',a0,ax),py,0).some(([u,v])=>px>=u&&px<v);
-      if(!cov(x,y-1,1))d+=`<polygon class="sw" points="${Q([[x+A,y+A],[x+B,y+A],[x+B,y+A+w],[x+A,y+A+w]])}"/>`;
-      if(!cov(x,y+1,1))d+=`<polygon class="sw" points="${Q([[x+A,y+B-w],[x+B,y+B-w],[x+B,y+B],[x+A,y+B]])}"/>`;
-      if(!cov(x-1,y,0))d+=`<polygon class="sw" points="${Q([[x+A,y+A],[x+A+w,y+A],[x+A+w,y+B],[x+A,y+B]])}"/>`;
-      if(!cov(x+1,y,0))d+=`<polygon class="sw" points="${Q([[x+B-w,y+A],[x+B,y+A],[x+B,y+B],[x+B-w,y+B]])}"/>`;}));
-    let z="";RDX.forEach(x=>RDY.forEach(y=>{if(x>=GX||y>=GY||inMR(x,y))return;
-      [[0,-1],[0,1]].forEach(([_,dy])=>{const yy=y+dy;if(yy<0||yy>=GY||RDY.has(yy)||inPkY(x,yy))return;const y0=dy<0?yy+.55:yy+.08;for(let i=0;i<4;i++){const x0=x+RI+.06+i*.135;z+=`<polygon class="zb" points="${Q([[x0,y0],[x0+.08,y0],[x0+.08,y0+.37],[x0,y0+.37]])}"/>`;}});
-      [[-1,0],[1,0]].forEach(([dx])=>{const xx=x+dx;if(xx<0||xx>=GX||RDX.has(xx)||inMR(xx,y))return;const x0=dx<0?xx+.55:xx+.08;for(let i=0;i<4;i++){const y0=y+RI+.06+i*.135;z+=`<polygon class="zb" points="${Q([[x0,y0],[x0+.37,y0],[x0+.37,y0+.08],[x0,y0+.08]])}"/>`;}});}));
+      if(!cov(x,y-1,1))d+=`<polygon class="sw" points="${Q(DN([[x+A,y+A],[x+B,y+A],[x+B,y+A+w],[x+A,y+A+w]]))}"/>`;
+      if(!cov(x,y+1,1))d+=`<polygon class="sw" points="${Q(DN([[x+A,y+B-w],[x+B,y+B-w],[x+B,y+B],[x+A,y+B]]))}"/>`;
+      if(!cov(x-1,y,0))d+=`<polygon class="sw" points="${Q(DN([[x+A,y+A],[x+A+w,y+A],[x+A+w,y+B],[x+A,y+B]]))}"/>`;
+      if(!cov(x+1,y,0))d+=`<polygon class="sw" points="${Q(DN([[x+B-w,y+A],[x+B,y+A],[x+B,y+B],[x+B-w,y+B]]))}"/>`;
+      {const k=RCN.find(q=>q.nx==x+.5&&q.ny==y+.5);if(k){const ix0=k.sx<0?x+A:x+B-w,iy0=k.sy<0?y+A:y+B-w;d+=`<polygon class="sw" points="${Q(DN([[ix0,iy0],[ix0+w,iy0],[ix0+w,iy0+w],[ix0,iy0+w]]))}"/>`;}}}));
+    // 회전 교차로: 신호등 없는 교차로 몇 곳을 둥근 섬 + 둥근 차로로 (04 2026-11-03 "원형으로 도는 도로")
+    // 회전 교차로는 마을 안 한 곳만 (04 2026-11-03 "너무 막 쓰지 마, 하나만"): 신호등 없는 네거리 중 마을 가운데에 가장 가까운 곳
+    {let best=null,bd=1e9;RB=null;EX.forEach(x=>EY.forEach(y=>{const inG=x>=0&&y>=0&&x<GX&&y<GY;if(inMR(x,y)||!okR(x,y))return;if(PK&&(x==PK.x-1||x==PK.x+PK.w)&&(y==PK.y-1||y==PK.y+PK.h))return;/* 동그란 공원 둘레 교차로는 회전 교차로 제외 */const cv=(a,b)=>!inMR(a,b)&&okR(a,b)&&ZN(a,b)!=1;if(!cv(x-1,y)||!cv(x+1,y)||!cv(x,y-1)||!cv(x,y+1))return;const lab=PL.some(q=>{if(!q||!q.lots.length)return false;const t=q.lots.reduce((a,b)=>a[0]+a[1]<=b[0]+b[1]?a:b);return Math.hypot(t[0]-x,t[1]-y)<3&&t[0]+t[1]>=x+y;}),dd=Math.hypot(x-GX/2,y-GY/2)+(inG?0:4)+(lab?20:0);/* 달 이름표에 가리지 않는 곳 */if(dd<bd){bd=dd;best=[x,y];}}));best=null;/* 회전 교차로 없앰 (04 2026-11-03 "다리랑 맞닿는 곳 원형도로 없애줘") */
+    RB=best;(best?[best]:[]).forEach(([x,y])=>{const cx=x+.5,cy=y+.5,ring=(r,n=40)=>{const o=[];for(let i=0;i<n;i++){const a=i/n*Math.PI*2;o.push([cx+Math.cos(a)*r,cy+Math.sin(a)*r]);}return o;};
+      d+=`<polygon class="sw" points="${Q(ring(.7,56))}"/><polygon class="ix" points="${Q(ring(.64,56))}"/><polygon class="sw" points="${Q(ring(.3))}"/><polygon class="pkg2" points="${Q(ring(.25))}"/>`;
+      const rl=ring(.47,56);for(let i=0;i<rl.length;i+=2){const a=rl[i],b=rl[(i+1)%rl.length];cl+=`M${G(...rotC(...a))}L${G(...rotC(...b))}`;}
+      const qq=rotC(cx,cy),[px,py]=G(...qq);DYN.push({o:qq[0]+qq[1]-1,y:py,s:tree(px,py,hsh(x+y)%3)});});}
+    // 바깥 동네 길에도 차 몇 대 (마을 안과 같은 모양)
+    {const PLc=MIFFY?vpNow().r.slice(0,4):(()=>{try{return DB.skin.pal&&DB.skin.pal()}catch(e){return null}})()||["var(--r1)","var(--r2)","var(--r3)","var(--r4)"];let n=0;const m5=v=>((v%5)+5)%5==4;
+      RSET.forEach(kk=>{const [x,y]=kk.split(",").map(Number);if(x>=0&&y>=0&&x<GX&&y<GY)return;if(m5(x)==m5(y)||CVT.has(kk)||inMR(x,y)||ZN(x,y)==1)return;const h=hsh((x+80)*19+(y+80)*37);if(h%9)return;
+        const vert=m5(x),dir=h&32?1:-1,off=.14*dir,w=vert?[x+.5+off,y+.5]:[x+.5,y+.5-off],s0=rotC(...w),s1=rotC(...(vert?[w[0],w[1]+dir]:[w[0]+dir,w[1]])),ux=Math.sign(Math.round(s1[0]-s0[0])),uy=Math.sign(Math.round(s1[1]-s0[1])),pw=G(...s0);
+        DYN.push({o:s0[0]+s0[1]-1,y:pw[1],s:`<g class="car" transform="translate(${pw[0]},${pw[1]})">${car(ux,uy,PLc[(n++)%PLc.length])}</g>`});});}
+    // 블록 모서리를 둥글게 (04 2026-11-03 "블록이 너무 사각사각"): 네거리 네 귀퉁이에 길 색 곡선 + 곡선 연석
+    {const hasR2=(a,b)=>okR(a,b)&&!inMR(a,b)&&ZN(a,b)!=1,rr=.55,w=.07,N=10;EX.forEach(x=>EY.forEach(y=>{if(!hasR2(x,y)||RB&&RB[0]==x&&RB[1]==y||CNK.has(x+","+y))return;
+      [[-1,-1],[1,-1],[-1,1],[1,1]].forEach(([dx,dy])=>{if(!hasR2(x+dx,y)||!hasR2(x,y+dy))return;if(PK&&x+dx>=PK.x&&x+dx<PK.x+PK.w&&y+dy>=PK.y&&y+dy<PK.y+PK.h)return;const px=x+.5+dx*(.5-RI),py=y+.5+dy*(.5-RI),cx=px+dx*rr,cy=py+dy*rr,arc=(r)=>{const o=[];for(let i=0;i<=N;i++){const t=i/N*Math.PI/2;o.push([cx-dx*r*Math.cos(t),cy-dy*r*Math.sin(t)]);}return o;};
+        d+=`<polygon class="ix" points="${Q([[px,py],...arc(rr)])}"/><polygon class="ix" points="${Q([[px,py],[px-dx*(w+.03),py],[px-dx*(w+.03),py+dy*rr],[px,py+dy*rr]])}"/><polygon class="ix" points="${Q([[px,py],[px,py-dy*(w+.03)],[px+dx*rr,py-dy*(w+.03)],[px+dx*rr,py]])}"/><polygon class="sw" points="${Q([...arc(rr),...arc(rr+w).reverse()])}"/>`;});}));}
+    let z="";const hasR=(a,b)=>okR(a,b)&&!inMR(a,b)&&ZN(a,b)!=1;/* 횡단보도: 마을 밖 교차로에도 똑같이 (04 2026-11-03 "외곽일수록 빈부격차") */EX.forEach(x=>EY.forEach(y=>{if(!hasR(x,y)||CNK.has(x+","+y)||PK&&(x==PK.x-1||x==PK.x+PK.w)&&(y==PK.y-1||y==PK.y+PK.h))return;const inG=x>=0&&y>=0&&x<GX&&y<GY;if(!inG&&hsh((x+60)*11+(y+60)*23)%2)return;/* 횡단보도 다시 늘림 (04 2026-11-03 "너무 없어"): 마을 안 교차로는 모두, 밖은 둘 중 하나 *//* 횡단보도 줄임 (04 2026-11-03): 마을 안은 신호등 있는 네거리만, 밖은 4곳 중 1곳 */
+      [[0,-1],[0,1]].forEach(([_,dy])=>{const yy=y+dy;if(EYs.has(yy)||!hasR(x,yy))return;const y0=dy<0?yy+.23:yy+.40;/* 둥근 모퉁이 곡선 밖, 곧은 길 위로 (04 "연석 깨짐") *//* 바탕 덮개 없앰: 점선은 noI로 이미 비킴 *//* 연석은 안 덮게 (04 "스티커처럼 끊어먹음") *//* 점선 안 겹치게 */for(let i=0;i<4;i++){const x0=x+RI+.09+i*.1167;z+=`<polygon class="zb" points="${Q([[x0,y0],[x0+.08,y0],[x0+.08,y0+.37],[x0,y0+.37]])}"/>`;}});
+      [[-1,0],[1,0]].forEach(([dx])=>{const xx=x+dx;if(EXs.has(xx)||!hasR(xx,y))return;const x0=dx<0?xx+.23:xx+.40;for(let i=0;i<4;i++){const y0=y+RI+.09+i*.1167;z+=`<polygon class="zb" points="${Q([[x0,y0],[x0+.37,y0],[x0+.37,y0+.08],[x0,y0+.08]])}"/>`;}});}));
     // 신호등: 교차로 대각선 두 모퉁이 인도 위, 팔을 교차로 쪽으로 뻗어 불 상자를 매닮
-    let tl="";const k=TW/58;RDX.forEach(x=>RDY.forEach(y=>{if(x>=GX||y>=GY||inMR(x,y))return;const ic=G(...rotC(x+.5,y+.5)),hv=hsh(x*13+y*7);
+    let tl="";const k=TW/58;RDX.forEach(x=>RDY.forEach(y=>{if(x>=GX||y>=GY||inMR(x,y)||CNK.has(x+","+y)||PK&&(x==PK.x-1||x==PK.x+PK.w)&&(y==PK.y-1||y==PK.y+PK.h)||RB&&RB[0]==x&&RB[1]==y)return;const ic=G(...rotC(x+.5,y+.5)),hv=hsh(x*13+y*7);
       [[x+RI-.1,y+RI-.1,0],[x+1-RI+.1,y+1-RI+.1,1]].forEach(([gx,gy,f])=>{if(f||hv%2)return;const qq=rotC(gx,gy),[px,py]=G(...qq),h=15*k;let vx=ic[0]-px,vy=ic[1]-py;const ln=Math.hypot(vx,vy)||1;vx/=ln;vy/=ln;
         const bw=5*k,bh=13*k,bx=px-bw/2,by=py-h-bh,sd=1.8*k;
         let tl1=`<g class="tlt"><ellipse class="crs" cx="${px}" cy="${py}" rx="${2.2*k}" ry="${1.1*k}"/><rect class="tpole" x="${px-.9*k}" y="${py-h}" width="${1.8*k}" height="${h}" rx="${.9*k}"/>`
@@ -395,7 +466,7 @@ function mkIso(root,cfg){
       al+=`<polygon class="aly ent" points="${Q(rib(pts,.055))}"/>`;});
     let arc="";{const Hm=TW*.42;const run=(vert,f)=>{let t0=null;for(let t=a0;t<=(vert?ay:ax);t++){const w=t<(vert?ay:ax)&&(vert?ZN(f,t):ZN(t,f))==1;if(w&&t0==null)t0=t;if(!w&&t0!=null){const t1=t,L=t1-t0,n=Math.max(1,Math.round(L/3));
         [RI-.1,1-RI+.1].forEach(e=>{let pa="",hg="";for(let k=0;k<=L*8;k++){const u=t0+k/8,q=vert?[f+e,u]:[u,f+e],[px,py]=G(...rotC(...q)),hh=Hm*Math.abs(Math.sin(Math.PI*n*(u-t0)/L));pa+=(k?"L":"M")+px.toFixed(1)+" "+(py-hh).toFixed(1);if(k%4==0&&k&&k<L*8)hg+=`M${px.toFixed(1)} ${py.toFixed(1)}V${(py-hh).toFixed(1)}`;}
-          arc+=`<path class="hng" d="${hg}"/><path class="arc" d="${pa}"/>`;});t0=null;}}};if(BB.x>=0)run(1,BB.x);if(BB.y>=0)run(0,BB.y);}
+          arc+=`<path class="hng" d="${hg}"/><path class="arc" d="${pa}"/>`;});t0=null;}}};if(BB.x>=0)run(1,BB.x);}
     return brg+al+d+`<path class="cl" d="${cl}"/>`+z+tl+arc;}
   function celebrate(id){const sc=root.querySelector(".scr"),el=bd.querySelector(`.hz[data-id="${id}"]`);if(!sc||!el)return;const r=el.getBoundingClientRect(),q=sc.getBoundingClientRect();if(r.width<2)return;
     const fx=document.createElement("div");fx.className="vlg-fx";fx.style.left=(r.left-q.left+r.width/2)+"px";fx.style.top=(r.top-q.top+r.height*.35)+"px";
@@ -404,7 +475,7 @@ function mkIso(root,cfg){
     fx.innerHTML=h;sc.appendChild(fx);setTimeout(()=>fx.remove(),2200);}
   function render(){v&&(v._rt=Date.now());
     setReg();fit();const SC=root.querySelector(".scr"),SW=SC.clientWidth,SH=SC.clientHeight,wlH=(root.querySelector("[data-wl]")||{}).offsetHeight||0;
-    {const pk=FM+"|"+R+"|"+Y;if(pk!==PK0){PAN={x:0,y:0};PK0=pk;}}PAD=48;setReg();RSET=buildRS();{const b=bb(),m=TW*2.2,hw=(b.x1-b.x0)*TW/2,hh=(b.y1-b.y0)*TW/2;v._pl={x:Math.max(m,hw-SW/2+m),y:Math.max(m,hh-SH/2+m)};if(FM!=null){v._pl.x+=SW*.3;v._pl.y+=SH*.3;}PAN.x=Math.max(-v._pl.x,Math.min(v._pl.x,PAN.x));PAN.y=Math.max(-v._pl.y,Math.min(v._pl.y,PAN.y));}const BB=BRL(),ZPC=(v._cam&&v._cam.fm===FM&&v._zc&&v._zc.fm2===FM&&Date.now()-v._zt<450)?v._zc:v._cam,ZSC=(ZPC&&ZPC.fm!==FM&&ZPC.r===R&&!RM)?TW/ZPC.tw:1,ML=Math.max(SW,SH)*Math.max(.6,(ZSC-1)/2+.7);let sea="",cliffs="";const LAY=[{c:"shn",lv:1.6,f:v=>v<1.6,d:""},{c:"shn",lv:RW0-1.6,f:v=>v>RW0-1.6,d:""},{c:"snd",lv:.95,f:v=>v<.95,d:""},{c:"snd",lv:RW0-.95,f:v=>v>RW0-.95,d:""},{c:"grn",lv:.45,f:v=>v<.45,d:""},{c:"grf",lv:RW0-.45,f:v=>v>RW0-.45,d:""}];const okR=(x,y)=>(x>=0&&y>=0&&x<GX&&y<GY)||RSET.has(x+","+y);
+    {const pk=FM+"|"+R+"|"+Y;if(pk!==PK0){PAN={x:0,y:0};PK0=pk;}}PAD=48;setReg();RSET=buildRS();{const b=bb(),m=TW*2.2,hw=(b.x1-b.x0)*TW/2,hh=(b.y1-b.y0)*TW/2;v._pl={x:Math.max(m,hw-SW/2+m),y:Math.max(m,hh-SH/2+m)};if(FM!=null){v._pl.x+=SW*.3;v._pl.y+=SH*.3;}PAN.x=Math.max(-v._pl.x,Math.min(v._pl.x,PAN.x));PAN.y=Math.max(-v._pl.y,Math.min(v._pl.y,PAN.y));}const BB=BRL(),ZPC=(v._cam&&v._cam.fm===FM&&v._zc&&v._zc.fm2===FM&&Date.now()-v._zt<450)?v._zc:v._cam,ZSC=(ZPC&&ZPC.fm!==FM&&ZPC.r===R&&!RM)?TW/ZPC.tw:1,ML=Math.max(SW,SH)*Math.max(.6,(ZSC-1)/2+.7);let sea="",cliffs="";const LAY=[{c:"shn",lv:1.6,f:v=>v<1.6,d:""},{c:"shn",lv:RW0-1.6,f:v=>v>RW0-1.6,d:""},{c:"snd",lv:.95,f:v=>v<.95,d:""},{c:"snd",lv:RW0-.95,f:v=>v>RW0-.95,d:""},{c:"grn",lv:.45,f:v=>v<.45,d:""},{c:"grf",lv:RW0-.45,f:v=>v>RW0-.45,d:""}];const okR=(x,y)=>!CAS.has(x+","+y)&&((x>=0&&y>=0&&x<GX&&y<GY)||RSET.has(x+","+y));
     const Wd=W(),Hd=H();let sandE="",tiles="",objs=[],wips=[],trees=[],parks=[],ghosts=[];
     const cc=FM==null?null:[PL[FM].cell.x+PL[FM].cell.w/2,PL[FM].cell.y+PL[FM].cell.h/2],ctr=FM==null?(()=>{const b=bb();return [(b.x0+b.x1)/2*TW,(b.y0+b.y1)/2*TW];})():G(...rotC(...cc)),offX=SW/2-ctr[0]+PAN.x,offY=(FM==null?TOPP+(SH-TOPP-WLH()-14)/2:SH/2+TW*.45)-ctr[1]+PAN.y;
     const occ={};J.filter(vis).forEach(j=>{const [x,y]=lotXY(j.m,j.lot);occ[x+","+y]=j;});
@@ -412,7 +483,7 @@ function mkIso(root,cfg){
       const out=x<0||y<0||x>=GX||y>=GY,dst=out?Math.max(-x,-y,x-GX+1,y-GY+1):0;
       const gRd=out&&((x<0||x>=GX)&&(x+100)%5==4||(y<0||y>=GY)&&(y+100)%5==4)&&okR(x,y);
       const ti=TI[x+","+y],road=!ti,isRd=(RDX.has(x)&&x<GX||RDY.has(y)&&y<GY)&&!inMR(x,y)&&okR(x,y)||gRd,m=road?-1:ti.m,i=road?-1:ti.i;
-      const [rx,ry]=rot(x,y),[sx,sy]=scr(rx,ry);if(sx+offX<-TW-ML||sx+offX>SW+TW+ML||sy+offY<-TW*2-ML||sy+offY>SH+TW+ML)continue;
+      const [rx,ry]=rot(x,y),[sx,sy]=TC(x,y);if(sx+offX<-TW-ML||sx+offX>SW+TW+ML||sy+offY<-TW*2-ML||sy+offY>SH+TW+ML)continue;
       const zn=out?ZN(x,y):0;
       if(zn==1){const cell=(cx,cy,st)=>{const C=[[cx,cy],[cx+st,cy],[cx+st,cy+st],[cx,cy+st]],V=C.map(c=>FF(...c));
           LAY.forEach(L=>{const inn=V.map(v=>L.f(v));if(!inn.some(Boolean))return;const pts=[];for(let k=0;k<4;k++){const k2=(k+1)%4;if(inn[k])pts.push(C[k]);if(inn[k]!=inn[k2]){const t=(L.lv-V[k])/(V[k2]-V[k]);pts.push([C[k][0]+(C[k2][0]-C[k][0])*t,C[k][1]+(C[k2][1]-C[k][1])*t]);}}
@@ -420,17 +491,17 @@ function mkIso(root,cfg){
         for(let a=0;a<2;a++)for(let b=0;b<2;b++)cell(x+a*.5,y+b*.5,.5);
         const h=hsh((x+60)*17+(y+60)*31),fc=FF(x+.5,y+.5);if(h%6==0&&fc>1.7&&fc<RW0-1.7){const w=TW*.16,px=sx+((h>>2)%5-2)*TW*.08,py=sy+TH/2+((h>>5)%3-1)*TH*.15;sea+=`M${px-w} ${py}q${w/2} ${-w*.35} ${w} 0t${w} 0`;}continue;}
       const cm=CEL[x+","+y],fut=cm!=null&&cm>CM;
-      const ln=LN[x+","+y],jj=occ[x+","+y],inR=q=>q&&x>=q.x&&x<q.x+q.w&&y>=q.y&&y<q.y+q.h,inPk=inR(PK)||GDN.some(inR);
-      tiles+=`<polygon class="tl${inPk?" pkg":ln?(fut?" fu":" ln"):road?(isRd?" rd":" gr"+(fut?" fu":"")):m>CM?" fu":jj&&jj.done?(jj.k=="o"?" pv":" yd"):m==CM?" cur":""}${out?" ou":""}${zn==2?" fb":""}"  ${cfg.tile?cfg.tile(m,road,x,y):""} data-m="${m}" data-i="${i}" points="${P([[sx,sy],[sx+TW/2,sy+TH/2],[sx,sy+TH],[sx-TW/2,sy+TH/2]])}"/>`;
+      const ln=LN[x+","+y],jj=occ[x+","+y],inR=q=>q&&x>=q.x&&x<q.x+q.w&&y>=q.y&&y<q.y+q.h,ffc=out?FF(x+.5,y+.5):-9,bank=out&&!isRd&&(ffc>-1.6&&ffc<.45||ffc>RW0-.45&&ffc<RW0+1.4),inPk=inR(PK)||GDN.some(inR)||bank;// 강가 둔치: 강 양쪽 띠는 공원(집 없이 나무)
+      tiles+=`<polygon class="tl${inPk?" pkg":ln?(fut?" fu":" ln"):road?(isRd?" rd":" gr"+(fut?" fu":"")):m>CM?" fu":jj&&jj.done?(jj.k=="o"?" pv":" yd"):m==CM?" cur":""}${out?" ou":""}${zn==2?" fb":""}"  ${cfg.tile?cfg.tile(m,road,x,y):""} data-m="${m}" data-i="${i}" points="${P([[x,y],[x+1,y],[x+1,y+1],[x,y+1]].map(p=>G(...rotC(...p))))}"/>`;
       const j=occ[x+","+y];if(j)(j.done?objs:wips).push({o:rx+ry,j,cx:sx,cy:sy+TH/2});
-      else if(inPk);
-      else if(road&&!ln&&!isRd&&!fut&&!out&&hsh((x+9)*41+(y+9)*29)%7==0)parks.push({o:rx+ry,cx:sx,cy:sy+TH/2,v:hsh((x+9)*3+(y+9)*5)%4,nb:[[1,0],[-1,0],[0,1],[0,-1]].filter(([dx,dy])=>{const X2=x+dx,Y2=y+dy,o2=X2<0||Y2<0||X2>=GX||Y2>=GY,g2=o2&&((X2<0||X2>=GX)&&(X2+100)%5==4||(Y2<0||Y2>=GY)&&(Y2+100)%5==4)&&okR(X2,Y2);return (RDX.has(X2)&&X2<GX||RDY.has(Y2)&&Y2<GY)&&!inMR(X2,Y2)&&okR(X2,Y2)||g2;}).map(([dx,dy])=>{const [a2,b2]=scr(...rot(x+dx,y+dy));return [(sx+a2)/2,(sy+b2)/2+TH/2];}),hs:hsh((x+9)*11+(y+9)*23)});
+      else if(inPk){if(bank&&hsh((x+70)*13+(y+70)*29)%3==0)trees.push({o:rx+ry,cx:sx,cy:sy+TH/2,v:hsh((x+70)*7+y)%3});}
+      else if(road&&!ln&&!isRd&&!fut&&!out&&hsh((x+9)*41+(y+9)*29)%7==0)parks.push({o:rx+ry,cx:sx,cy:sy+TH/2,v:hsh((x+9)*3+(y+9)*5)%4,nb:[[1,0],[-1,0],[0,1],[0,-1]].filter(([dx,dy])=>{const X2=x+dx,Y2=y+dy,o2=X2<0||Y2<0||X2>=GX||Y2>=GY,g2=o2&&((X2<0||X2>=GX)&&(X2+100)%5==4||(Y2<0||Y2>=GY)&&(Y2+100)%5==4)&&okR(X2,Y2);return (RDX.has(X2)&&X2<GX||RDY.has(Y2)&&Y2<GY)&&!inMR(X2,Y2)&&okR(X2,Y2)||g2;}).map(([dx,dy])=>{const [a2,b2]=TC(x+dx,y+dy);return [(sx+a2)/2,(sy+b2)/2+TH/2];}),hs:hsh((x+9)*11+(y+9)*23)});
       else if((out||EMP.some(inR))&&!isRd&&hsh((x+99)*37+(y+99)*11)%(zn==2?5:2)==0)ghosts.push({o:rx+ry,cx:sx,cy:sy+TH/2,h:hsh((x+99)*5+(y+99)*7)});
       else if(road&&!ln&&!isRd&&!fut&&hsh((x+9)*31+(y+9)*17)%5<(out?1:2))trees.push({o:rx+ry,cx:sx,cy:sy+TH/2,v:hsh((x+9)*7+(y+9)*13)%3,op:1});}
     const c=[[0,0],[Wd,0],[Wd,Hd],[0,Hd]].map(([x,y])=>scr(x,y));
     objs.sort((a,b)=>a.o-b.o);
     DYN=[];BNC=0;const traf=traffic();
-    const tz=(o)=>o.op<1?`<g opacity="${o.op}">${tree(o.cx,o.cy,o.v)}</g>`:tree(o.cx,o.cy,o.v);const all=objs.map(o=>({o:o.o,y:o.cy,s:yardHouse(o)})).concat(trees.map(t=>({o:t.o,y:t.cy,s:tz(t)}))).concat(parks.map(t=>({o:t.o,y:t.cy,s:park(t)}))).concat(ghosts.map(g=>({o:g.o,y:g.cy,s:ghost(g)}))).concat(PK?bigPark():[]).concat(GDN.flatMap(garden)).concat(DYN);all.sort((a,b)=>a.o-b.o||a.y-b.y);
+    const tz=(o)=>o.op<1?`<g opacity="${o.op}">${tree(o.cx,o.cy,o.v)}</g>`:tree(o.cx,o.cy,o.v);const all=objs.map(o=>({o:o.o,y:o.cy,s:yardHouse(o)})).concat(trees.map(t=>({o:t.o,y:t.cy,s:tz(t)}))).concat(parks.map(t=>({o:t.o,y:t.cy,s:park(t)}))).concat(ghosts.map(g=>({o:g.o,y:g.cy,s:ghost(g)}))).concat(PK?bigPark((()=>{const tot=PL.reduce((a,q)=>a+(q?q.lots.length:0),0)||1,f=objs.length/tot;return f<.25?1:f<.5?2:f<.75?3:4;})()):[]).concat(GDN.flatMap(garden)).concat(DYN);all.sort((a,b)=>a.o-b.o||a.y-b.y);
     const hz0=all.map(a=>a.s).join("");
     const hz=hz0;
     const kk=TW/58;
@@ -441,7 +512,7 @@ function mkIso(root,cfg){
         el.onclick=e=>{e.stopPropagation();closeAll();showPop(j,e.clientX,e.clientY);};
         el.oncontextmenu=e=>{e.preventDefault();e.stopPropagation();closeAll();showMenu(j,e.clientX,e.clientY);};
         el.onmouseenter=()=>{const l=lot();if(l)l.classList.add("on");};el.onmouseleave=()=>{const l=lot();if(l)l.classList.remove("on");};});}
-    let flags="",poles="";for(let m=0;m<12;m++){let bx=null;for(const [x,y] of PL[m].lots){const q=rot(x,y),[sx,sy]=scr(q[0],q[1]);if(!bx||sy<bx[1])bx=[sx,sy];}const f=cfg.flag(bx[0],bx[1]+4,m);poles+=f[0];flags+=f[1];
+    let flags="",poles="";for(let m=0;m<12;m++){let bx=null;for(const [x,y] of PL[m].lots){const [sx,sy]=TC(x,y);if(!bx||sy<bx[1])bx=[sx,sy];}const f=cfg.flag(bx[0],bx[1]+4,m);poles+=f[0];flags+=f[1];
 }
     const vw=SW,vh=SH;
     const shore=LAY.map(L=>`<path class="${L.c}" d="${L.d}"/>`).join("")+`<path class="wave" d="${sea}"/>`;
@@ -452,29 +523,42 @@ function mkIso(root,cfg){
     {let pc=v._cam,dur=450;const sv=bd.querySelector("svg");
       // 전환 도중 다시 그리면(크기 맞춤 등) 처음 카메라에서 남은 시간만큼 이어서 감: 한 프레임 튀는 것 막기
       if(pc&&pc.fm===FM&&v._zc&&v._zc.fm2===FM&&Date.now()-v._zt<450){pc=v._zc;dur=Math.max(120,450-(Date.now()-v._zt));}
-      if(pc&&pc.fm!==FM&&pc.r===R&&sv&&!RM){if(dur==450){v._zc=Object.assign({},pc,{fm2:FM});v._zt=Date.now();}const sc=TW/pc.tw,tx=pc.ox-offX/sc,ty=pc.oy-offY/sc;
+      const soft=v._soft&&pc&&pc.fm===FM&&pc.r===R&&(Math.abs(pc.tw-TW)>.3||Math.hypot(pc.ox-offX,pc.oy-offY)>3);v._soft=0;if(soft)dur=380;/* 한 해로 돌아온 뒤 접는 중 줄 높이로 다시 맞출 때 뚝 튀지 않게 이어서 움직임 (04 2026-11-03 "달 확대 후 한 해로 돌아가는 게 어색") *//* 처음 열 때(자리 잡는 동안)는 확대 애니메이션 없이, 다 자리 잡은 뒤 한 번에 살짝 나타나게 (04 2026-11-03 "멀리서 열리고 한번 그리고 확대되면서 움찔") */{const bdd=bd;if(!v._ready){bdd.classList.add("warm");clearTimeout(v._rdy);v._rdy=setTimeout(()=>{v._ready=1;bdd.classList.remove("warm");},420);}}
+      if(v._ready&&pc&&(pc.fm!==FM||soft)&&pc.r===R&&sv&&!RM){if(dur==450){v._zc=Object.assign({},pc,{fm2:FM});v._zt=Date.now();}const sc=TW/pc.tw,tx=pc.ox-offX/sc,ty=pc.oy-offY/sc;
       sv.style.transformOrigin="0 0";sv.style.transform=`translate(${tx}px,${ty}px) scale(${1/sc})`;sv.getBoundingClientRect();sv.style.transition=`transform ${dur}ms cubic-bezier(.3,.7,.2,1)`;sv.style.transform="none";}
-     v._cam={ox:offX,oy:offY,tw:TW,fm:FM,r:R};}
+     const chg=pc&&pc.fm!==FM&&!v._re;v._cam={ox:offX,oy:offY,tw:TW,fm:FM,r:R};
+     /* 한 해↔한 달 바뀐 직후 칸 높이가 달라지면 바로 한 번 더 맞춰 그림(옛 카메라에서 출발): 1초 뒤 다시 튀는 것 막기 (04 2026-11-03) */
+     if(chg)v._mc=pc;}
     {const sc2=root.querySelector(".scr");v._sz=sc2.clientWidth+"x"+sc2.clientHeight;}
     // 접는 중 줄 높이가 바뀌면(첫 그림·돌리기·거르기) 한 번 더 맞춤: 아래 줄이 구역을 덮지 않게
-    if(FM==null&&!v._wlFix){const w=root.querySelector("[data-wl]"),h2=w&&w.children.length>1?w.offsetHeight:0;if(Math.abs(h2-(v._wlUsed||0))>6){v._wlFix=1;requestAnimationFrame(()=>{render();v._wlFix=0;});}}
+    if(FM==null&&!v._wlFix){const w=root.querySelector("[data-wl]"),h2=w&&w.children.length>1?w.offsetHeight:0;if(Math.abs(h2-(v._wlUsed||0))>6){v._wlFix=1;requestAnimationFrame(()=>{v._soft=1;render();v._wlFix=0;});}}
     // 한 달 보기: 집마다 부동산 앱처럼 팻말(의뢰인·금액)
     if(FM!=null){const G0=bd.querySelector("svg>g");let pins="",PS=[];const man=f=>f>=10000?Math.round(f/10000).toLocaleString("ko-KR")+"만":f?f.toLocaleString("ko-KR")+"원":"";
-      J.filter(j=>j.m==FM&&j.done&&vis(j)).forEach(j=>{const el=bd.querySelector(`.hz[data-id="${j.id}"]`);if(!el)return;let b;try{b=el.getBBox()}catch(_){return}if(!b.width)return;
+      let PI=0;J.filter(j=>j.m==FM&&j.done&&vis(j)).forEach(j=>{const el=bd.querySelector(`.hz[data-id="${j.id}"]`);if(!el)return;let b;try{b=el.getBBox()}catch(_){return}if(!b.width)return;
         const x=b.x+b.width/2,y=b.y-2;
-        PS.push([y,`<foreignObject class="pin" data-id="${j.id}" x="${(x-130).toFixed(1)}" y="${(y-110).toFixed(1)}" width="260" height="110"><div xmlns="http://www.w3.org/1999/xhtml" class="ptip">${j.im?`<img class="pth" data-k="${j.im}" alt=""/>`:""}<div class="ptx"><b>${j.cl}</b><span>${j.k=="c"?j.t:j.t+(j.pg?" · "+j.pg+"p":"")}</span><span>${j.m+1}월 ${j.d}일 완성 · ${won(j.fee)}</span></div></div></foreignObject>`]);});pins=PS.sort((a,b)=>a[0]-b[0]).map(x=>x[1]).join("");
+        const PST=window.__pnSt||"B",rc=ROOF[j.cl]||"#888";
+        if(PST==="A")PS.push([y,`<foreignObject class="pin" data-id="${j.id}" x="${(x-130).toFixed(1)}" y="${(y-110).toFixed(1)}" width="260" height="110"><div xmlns="http://www.w3.org/1999/xhtml" class="ptip">${j.im?`<img class="pth" data-k="${j.im}" alt=""/>`:""}<div class="ptx"><b>${j.cl}</b><span>${j.k=="c"?j.t:j.t+(j.pg?" · "+j.pg+"p":"")}</span><span>${j.m+1}월 ${j.d}일 완성 · ${won(j.fee)}</span></div></div></foreignObject>`,x,0,0]);
+        else{/* 팻말 시안 (04 2026-11-03 "카드가 따닥따닥, 회색이라 안 예뻐"): B 흰 말풍선+지붕 색 띠(이름·금액 한 줄), C 지붕 색 알약(이름만), D 금액 동그라미. 겹치면 위로 비키고, 그래도 겹치면 점만 */
+          const lbl=PST==="D"?man(j.fee):j.cl/* B: 이름만 (04 2026-11-03 "금액 들어가는 게 별로") */,wE=PST==="D"?Math.max(34,[...lbl].length*9+14):[...lbl].length*(PST==="C"?12:12.5)+30,hE=PST==="D"?26:28;
+          PS.push([y,(dy,dot)=>dot?`<circle class="pdot" cx="${x}" cy="${y-6}" r="4.5" fill="${rc}"/>`:`<foreignObject class="pin" data-id="${j.id}" x="${(x-wE/2-6).toFixed(1)}" y="${(y-hE-14-dy).toFixed(1)}" width="${wE+12}" height="${hE+16+dy}"><div xmlns="http://www.w3.org/1999/xhtml" class="pn${PST}" style="--rc:${rc};--st:${dy}px;--i:${PI++}"><span>${cttE(lbl)}</span></div></foreignObject>`,x,wE,hE]);}});
+      const cttE=t=>String(t).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+      {const placed=[];PS.sort((a,b)=>b[0]-a[0]);/* 앞(아래)에 있는 집부터 자리 잡기 */PS.forEach(it=>{if(typeof it[1]==="string"){it.out=it[1];return;}const [y,f,x,w,h]=it;let dy=0,ok=false;for(let t=0;t<4&&!ok;t++){const bx={x0:x-w/2-3,x1:x+w/2+3,y0:y-h-12-dy,y1:y-12-dy};if(!placed.some(q=>bx.x0<q.x1&&bx.x1>q.x0&&bx.y0<q.y1&&bx.y1>q.y0)){placed.push(bx);ok=true;}else dy+=h+4;}it.out=ok?f(dy,false):f(0,true);});}
+      pins=PS.sort((a,b)=>a[0]-b[0]).map(x=>x.out).join("");
+      /* 한 달 보기 달 표시: 블록 앞 모서리 아래 큰 이름표 (04 2026-11-03 "달 표기가 더 잘 보이게") */if(G0){const c=PL[FM].cell,cn=[[c.x,c.y+c.h],[c.x+c.w,c.y+c.h],[c.x+c.w,c.y],[c.x,c.y]].map(q=>G(...rotC(...q)));const fp=cn.reduce((a,b)=>b[1]>a[1]?b:a),nD=J.filter(j=>j.m==FM&&j.done&&vis(j)).length,tx=MN[FM],ww=[...tx].length*20+76;
+        G0.insertAdjacentHTML("beforeend",`<foreignObject class="mbig" x="${fp[0]-ww/2-10}" y="${fp[1]+6}" width="${ww+20}" height="60"><div xmlns="http://www.w3.org/1999/xhtml" class="mbg${FM==CM?" now":""}"><b>${tx}</b><span>${nD}채</span></div></foreignObject>`);bd.querySelectorAll(".mlg,.mpo").forEach((g,i)=>{if(i%1==0)g.style.display="none";});}
       if(G0&&pins){G0.insertAdjacentHTML("beforeend",`<g class="pins">${pins}</g>`);G0.querySelectorAll(".pins img.pth").forEach(im=>thumbURL(im.dataset.k).then(u=>{if(u)im.src=u;else im.remove();}));}}
     // 완공 연출: 지난번에 못 본 새 완성 집에 리본이 끊기고 꽃가루가 터짐(한 번만)
     {const KEY="vlgDoneSeen2",now=J.filter(j=>j.done).map(j=>j.uid);let seen=null;try{seen=JSON.parse(localStorage.getItem(KEY)||"null")}catch(_){}
      if(seen&&!RM){const ss=new Set(seen),nw=J.filter(j=>j.done&&!ss.has(j.uid)).slice(-3);nw.forEach((j,n)=>setTimeout(()=>celebrate(j.id),250+n*500));}
      try{localStorage.setItem(KEY,JSON.stringify([...new Set((seen||[]).concat(now))].slice(-3000)))}catch(_){}}
     root.classList.toggle("mon",FM!=null);
-    {const chk=()=>{const dk=root.querySelector(".desk");if(!dk||!document.body.contains(dk))return;const nh=Math.max(360,Math.round(innerHeight-dk.getBoundingClientRect().top-16));if(Math.abs(nh-(dk._h||0))>4)render();};if(!v._fx){v._fx=1;[60,300,900].forEach(t=>setTimeout(chk,t));setTimeout(()=>v._fx=0,950);}}
+    /* 한 해↔한 달 바뀐 직후: 머리줄·칸 높이가 다 바뀐 뒤 같은 순간에 한 번 더 맞춤(옛 카메라에서 출발) → 1초 뒤 움찔 없앰 (04 2026-11-03) */{const dk0=root.querySelector(".desk");if(dk0){v._tops=v._tops||{};v._tops[FM==null?"y":"m"]=dk0.getBoundingClientRect().top;}}if(v._mc&&!v._re){const pc0=v._mc;v._mc=null;const dk=root.querySelector(".desk"),nh=dk?Math.max(360,Math.round(innerHeight-dk.getBoundingClientRect().top-16)):0;if(dk&&Math.abs(nh-(dk._h||0))>4){v._cam=pc0;v._zc=null;v._re=1;try{render();}finally{v._re=0;}return;}}else v._mc=null;
+    {const chk=()=>{const dk=root.querySelector(".desk");if(!dk||!document.body.contains(dk))return;const nh=Math.max(360,Math.round(innerHeight-dk.getBoundingClientRect().top-16));if(Math.abs(nh-(dk._h||0))>4){v._soft=1;render();}};if(!v._fx){v._fx=1;[60,300,900].forEach(t=>setTimeout(chk,t));setTimeout(()=>v._fx=0,950);}}
     bd.querySelectorAll(".hz").forEach(g=>bind(g,J.find(j=>j.id==+g.dataset.id)));
     const done=J.filter(j=>j.done&&!j.hid),nC=done.filter(j=>j.k=="c").length,nb=new Set(done.map(j=>j.cl)).size,sum=done.reduce((a,j)=>a+j.fee,0);
     const yt=root.querySelector("[data-yt]");if(yt)yt.innerHTML=FM==null?`${Y}`:`${Y}<em>${MN[FM]}</em>`;
     root.querySelectorAll("[data-y]").forEach(b=>{const d=+b.dataset.y;b.disabled=FM==null?!YRS.some(y=>d<0?y<Y:y>Y):(FM+d<0||FM+d>11);});
-    root.querySelectorAll("[data-vm]").forEach(b=>b.classList.toggle("on",(b.dataset.vm=="m")==(FM!=null)));
+    root.querySelectorAll("[data-vm]").forEach(b=>b.classList.toggle("on",(b.dataset.vm=="m")==(FM!=null)));{const bk=root.querySelector("[data-back]");if(bk){bk.hidden=FM==null;bk.onclick=()=>{FM=null;closeAll();render();};}}/* 한 달 보기에서 한 해로 돌아가는 큰 버튼 (04 2026-11-03) */
     bd.querySelectorAll(".tl[data-m]").forEach(t=>{const m=+t.dataset.m;if(m>=0&&m!==FM)t.onclick=()=>{FM=m;closeAll();render();};});
     bd.querySelectorAll(".mlg").forEach((g,m)=>g.onclick=()=>{FM=m;closeAll();render();});
     root.querySelector("[data-stat]").innerHTML=`<span><b>${done.length}</b>채</span><span><b>${nC}</b>집</span><span><b>${done.length-nC}</b>건물</span><span><b>${nb}</b>이웃</span><span><b>${J.filter(j=>!j.done&&!j.hid).length}</b>${cfg.wip}</span>`;
@@ -555,7 +639,7 @@ const MARKUP=()=>`<div data-main><div class="vhead"><div class="yr"><button data
         <i class="vsp"></i><div class="fseg" data-f><button class="on" data-k="all">전체</button><button data-k="c">커미션</button><button data-k="o">외주</button></div></div>
       <div class="stat" data-stat></div>
       <div class="desk"><div class="wl" data-wl></div><div class="scr"><div class="board" data-board></div></div>
-        <div class="ctl"><button data-night title="밤">☾</button></div></div></div>`;
+        <div class="ctl"><button data-night title="밤">☾</button></div><button class="vback" data-back hidden>‹ 한 해 보기</button></div></div>`;
 const CFG={depth:8,wip:"접는 중",
   base:(c,d)=>{const o=10;return `<polygon class="shad" points="${P(c.map(p=>[p[0]+o,p[1]+o+d]))}"/><polygon class="sheet2" points="${P([c[3],c[2],[c[2][0],c[2][1]+d],[c[3][0],c[3][1]+d]])}"/><polygon class="sheet2" points="${P([c[2],c[1],[c[1][0],c[1][1]+d],[c[2][0],c[2][1]+d]])}" style="filter:brightness(.93)"/>`;},
   flag:(x,y,m)=>{const w=m>8?48:40,H=34,c=m==CM?" now":"";return [`<g class="mpo${c}"><ellipse cx="${x}" cy="${y}" rx="5" ry="2.5"/><line x1="${x}" y1="${y}" x2="${x}" y2="${y-H}"/></g>`,`<g class="mlg${c}" transform="translate(${x},${y-H})"><line class="mpl" x1="0" y1="0" x2="0" y2="14"/><rect x="0" y="-2" width="${w}" height="24" rx="4"/><text x="${w/2}" y="14.5" text-anchor="middle">${MN[m]}</text></g>`]},

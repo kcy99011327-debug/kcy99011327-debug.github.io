@@ -628,3 +628,37 @@ html body.sk-village .vlg.miffy.vp[data-vp="folder"] .tl.ou.gr,html body.sk-vill
 html body.sk-village .vlg.miffy.vp[data-vp="folder"] svg .w.bw{fill:#fff}
 /* 아직 안 온 달: 큰 노란 판 대신 옅은 빈 땅 + 칸 선이 보이게 */
 html body.sk-village .vlg.miffy.vp .tl.fu,html body.sk-village .vlg.miffy.vp .tl.gr.fu{fill:color-mix(in srgb,var(--vSd) 38%,var(--vM));stroke:color-mix(in srgb,var(--vSd) 70%,var(--vInk) 12%);stroke-width:.7}
+
+/* 한 해로 돌아가기 버튼 (04 2026-11-03) */
+html body .vlg .desk{position:relative}
+html body .vlg .vback{position:absolute!important;left:12px;top:12px;z-index:40;height:36px!important;padding:0 16px!important;border-radius:18px!important;border:0!important;background:#2b2520!important;color:#fff!important;font:600 14px system-ui,sans-serif!important;box-shadow:0 2px 10px #0004!important;cursor:pointer}
+html body .vlg .vback[hidden]{display:none}
+
+/* 팻말 시안 B·C·D (04 2026-11-03) */
+html body .vlg .pin>div[class^="pn"]{position:absolute;left:50%;bottom:8px;transform:translateX(-50%);white-space:nowrap;font:700 12.5px/1 system-ui,sans-serif;display:flex;align-items:center}
+html body .vlg .pin>div[class^="pn"]::before{content:"";position:absolute;left:50%;top:100%;width:1.5px;height:calc(var(--st,0px) + 6px);margin-left:-.75px;background:color-mix(in srgb,var(--rc) 70%,#333)}
+html body .vlg .pnB{background:#fff;color:#2b2520;border-radius:14px;padding:7px 11px 7px 9px;box-shadow:0 2px 6px rgba(0,0,0,.16);border:1.5px solid var(--rc)}
+html body .vlg .pnB span::before{content:"";display:inline-block;width:9px;height:9px;border-radius:50%;background:var(--rc);margin-right:6px;vertical-align:-1px}
+html body .vlg .pnC{background:var(--rc);color:#fff;border-radius:14px;padding:7px 12px;box-shadow:0 2px 6px rgba(0,0,0,.18);text-shadow:0 1px 1px rgba(0,0,0,.25)}
+html body .vlg .pnD{background:#fff;color:#2b2520;border-radius:13px;padding:6px 9px;border:2px solid var(--rc);box-shadow:0 2px 5px rgba(0,0,0,.15);font-size:12px}
+/* 팻말 톡 올라오는 애니메이션 (04 2026-11-03 "약간의 애니메이션") */
+@keyframes vlgPin{0%{opacity:0;transform:translate(-50%,8px) scale(.7)}70%{opacity:1;transform:translate(-50%,-2px) scale(1.04)}100%{opacity:1;transform:translate(-50%,0) scale(1)}}
+html body .vlg .pin>div[class^="pn"]{animation:vlgPin .42s cubic-bezier(.3,.8,.3,1.2) both;animation-delay:calc(var(--i,0) * 35ms + 250ms);transform-origin:50% 100%}
+html body .vlg .pin:hover>div[class^="pn"]{transform:translate(-50%,-3px) scale(1.06);transition:transform .15s}
+@media (prefers-reduced-motion:reduce){html body .vlg .pin>div[class^="pn"]{animation:none}}
+/* 한 달 보기 큰 달 이름표 (04 2026-11-03) */
+html body .vlg .mbig{overflow:visible;pointer-events:none}
+html body .vlg .mbg{display:inline-flex;align-items:baseline;gap:8px;margin:0 auto;position:relative;left:50%;transform:translateX(-50%);background:#fff;color:#2b2520;border-radius:22px;padding:9px 18px;box-shadow:0 3px 12px rgba(0,0,0,.18);border:2px solid #2b2520;white-space:nowrap;animation:vlgMb .45s cubic-bezier(.3,.8,.3,1.2) both .15s}
+html body .vlg .mbg b{font:800 22px/1 system-ui,sans-serif}
+html body .vlg .mbg span{font:600 13px/1 system-ui,sans-serif;opacity:.7}
+html body .vlg .mbg.now{background:#2b2520;color:#fff}
+@keyframes vlgMb{0%{opacity:0;transform:translate(-50%,10px) scale(.8)}100%{opacity:1;transform:translate(-50%,0) scale(1)}}
+@media (prefers-reduced-motion:reduce){html body .vlg .mbg{animation:none}}
+/* 처음 열 때 자리 잡을 때까지 숨겼다가 살짝 나타남 (04 2026-11-03) */
+html body .vlg .board.warm{opacity:0}
+html body .vlg .board{transition:transform .6s cubic-bezier(.3,.7,.2,1),opacity .28s ease}
+
+/* v107 연석 이음 (04 11-03 "도로 깨진 부분, 연석"): 모퉁이 덮개는 테두리 없이, 연석도 같은 색 테두리로 길 테두리 선을 덮음 */
+html body.sk-village .vlg .ix.nf{stroke:none!important}
+html body.sk-village .vlg.miffy .sw{stroke:color-mix(in srgb,#fff 85%,#7dbb68);stroke-width:1;stroke-linejoin:round}
+html body.sk-village .vlg.miffy.vp .sw{stroke:color-mix(in srgb,var(--vM) 85%,var(--vG))}

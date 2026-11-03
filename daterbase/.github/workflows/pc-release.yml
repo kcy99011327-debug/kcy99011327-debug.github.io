@@ -1,0 +1,64 @@
+name: pc-release
+# PC 프로그램 설치 파일 만들기 + 자동 업데이트용 릴리스 올리기
+# pcapp/package.json의 version을 올려 main에 올리면 돌아가요(또는 Actions에서 직접 실행). 릴리스 태그는 pc-v<version>.
+# 개인용(latest.yml)과 친구용(friend.yml)을 한 릴리스에 같이 올려요. 이미 그 버전 릴리스가 있으면 건너뛰어요.
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths: ['pcapp/package.json']
+permissions:
+  contents: write
+jobs:
+  build:
+    runs-on: windows-latest
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: 버전 확인
+        id: ver
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          v=$(node -p "require('./pcapp/package.json').version")
+          echo "v=$v" >> "$GITHUB_OUTPUT"
+          if gh release view "pc-v$v" >/dev/null 2>&1; then echo "skip=1" >> "$GITHUB_OUTPUT"; echo "pc-v$v already released"; fi
+      # 화면 파일: 개인용 = 저장소 맨 위, 친구용 = share/
+      - name: 화면 파일 모으기
+        if: steps.ver.outputs.skip != '1'
+        run: |
+          cd pcapp
+          mkdir -p dist dist-share
+          find .. -maxdepth 1 -type f \( -name '*.html' -o -name '*.js' -o -name '*.json' -o -name '*.woff2' -o -name '*.png' -o -name '*.svg' -o -name '*.webmanifest' -o -name '*.txt' \) -exec cp {} dist/ \;
+          cp ../share/* dist-share/ 2>/dev/null || true
+          ls dist | head -50
+          ls dist-share | head -50
+      - name: npm install
+        if: steps.ver.outputs.skip != '1'
+        working-directory: pcapp
+        run: npm install --no-audit --no-fund
+      - name: 개인용 설치 파일
+        if: steps.ver.outputs.skip != '1'
+        working-directory: pcapp
+        run: npx electron-builder --win --publish never '--config.artifactName=Daterbase-Setup-${version}.${ext}'
+      - name: 친구용 설치 파일
+        if: steps.ver.outputs.skip != '1'
+        working-directory: pcapp
+        run: npx electron-builder --win --publish never --config.directories.output=release-friend '--config.artifactName=Daterbase-Friend-Setup-${version}.${ext}' --config.extraMetadata.dbShare=true --config.publish.channel=friend
+      - name: 릴리스 올리기
+        if: steps.ver.outputs.skip != '1'
+        working-directory: pcapp
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          ls -la release release-friend
+          v="${{ steps.ver.outputs.v }}"
+          gh release create "pc-v$v" --target "$GITHUB_SHA" \
+            release/Daterbase-Setup-*.exe release/Daterbase-Setup-*.exe.blockmap release/latest.yml \
+            release-friend/Daterbase-Friend-Setup-*.exe release-friend/Daterbase-Friend-Setup-*.exe.blockmap release-friend/friend.yml \
+            --title "Daterbase PC $v" --notes "Daterbase PC 프로그램 $v" --latest

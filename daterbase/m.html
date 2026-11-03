@@ -1052,6 +1052,22 @@ select.trl-chip{appearance:auto}
 .trl-h{white-space:pre-wrap}
 @media(max-width:899px){.trl-or{grid-template-columns:minmax(0,1fr)}}
 @media (prefers-reduced-motion:reduce){.trl-sw i{transition:none}}
+
+.trl{position:relative}
+.trl-opt{position:absolute;z-index:8;right:0;top:34px;width:min(560px,100%);background:var(--surface);box-shadow:0 8px 28px rgba(0,0,0,.16);padding:12px 14px 14px;display:grid;grid-template-columns:1fr 1fr;gap:4px 18px}
+.trl-oh{grid-column:1/-1;margin-bottom:4px}
+.trl-or{grid-template-columns:92px minmax(0,1fr);min-height:32px}
+.trl-or:first-of-type{grid-column:1/-1}
+.trl-oxx{display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;padding:0}
+.trl-opb{gap:2px}
+.trl-view.is-ed .trl-ed{outline:0;border-radius:4px;min-height:1.4em;cursor:text;transition:background .15s ease-out}
+.trl-view.is-ed .trl-ed:hover{background:color-mix(in srgb,var(--accent) 8%,transparent)}
+.trl-view.is-ed .trl-ed:focus{outline:2px solid color-mix(in srgb,var(--accent) 55%,transparent);outline-offset:2px;background:none}
+.trl-nmi{border-bottom:0}
+.trl-nmi:hover{background:color-mix(in srgb,var(--accent) 8%,transparent);border-radius:4px}
+.trl-nmi:focus{outline:2px solid color-mix(in srgb,var(--accent) 55%,transparent);border-radius:4px}
+.trl-txb{margin-bottom:-2px}
+@media(max-width:899px){.trl-opt{grid-template-columns:minmax(0,1fr);position:static;box-shadow:none;background:var(--bg)}.trl-or:first-of-type{grid-column:auto}}
 .tr-cal__c.is-out{background:none}
 .tr-cal__c.is-today{box-shadow:inset 0 0 0 2px var(--accent-strong)}
 .tr-cal__n{font-size:calc(12px*var(--fs,1));font-variant-numeric:tabular-nums;color:var(--muted)}
@@ -4589,7 +4605,7 @@ var cmOpenId=null;function cmTryOpen(){if(cmOpenId)window.dispatchEvent(new Even
 function cmWrapBridge(){let b=window.__cmBridge;if(!b||b.__w)return;b.__w=!0;["setJob","delJob","setTpl","delTpl","setCfg"].forEach((k)=>{let f=b[k];b[k]=(...a)=>{let r=f(...a);window.__cmSig=cmSig();return r}})}
 cmWrapBridge();
 
-var BUILD_V="1793731349973";try{document.documentElement.classList.add("sbt")}catch(_){}
+var BUILD_V="1793731736229";try{document.documentElement.classList.add("sbt")}catch(_){}
 var updSeen=0,updOnce=0,updX=0;
 function webUpd(auto,man){try{if(!man&&(typeof WGWIN!=="undefined"&&WGWIN||typeof RAILWIN!=="undefined"&&RAILWIN))return;let pc=!!window.planner;if(!/^\d+$/.test(BUILD_V)||(!pc&&location.protocol==="file:"))return;if(auto&&!man){let ae=document.activeElement;if(ae&&/^(INPUT|TEXTAREA|SELECT)$/.test(ae.tagName)||ae&&ae.isContentEditable||document.querySelector(".modal"))return}fetch((pc?DB_HOME+(window.DB_SHARE?"share/":""):"./")+"version.json?t="+Date.now(),{cache:"no-store"}).then((r)=>r.ok?r.json():null).then((jv)=>{if(!jv||!jv.v||(pc?+jv.v<=+BUILD_V:String(jv.v)===BUILD_V)){if(man)j("최신 버전이에요");return}if(pc&&jv.app&&jv.app!==APP_VER)return;if(!man&&window.DB_SHARE&&(!jv.app||jv.app===APP_VER))return;if(pc&&!man){if(!updSeen){updSeen=Date.now();setTimeout(()=>webUpd(!1),32000);return}if(Date.now()-updSeen<30000)return}if(document.getElementById("upd-banner"))return;if(!man){if(window.DB_SHARE){if(updOnce)return}else if(updOnce&&+jv.v<=updOnce&&Date.now()-updX<6e5)return}updOnce=window.DB_SHARE?1:+jv.v||1;let d=document.createElement("div");d.id="upd-banner";d.style.cssText="position:fixed;left:12px;right:12px;top:calc(12px + env(safe-area-inset-top,0px));z-index:9999;display:flex;align-items:center;gap:10px;padding:11px 12px 11px 16px;border-radius:14px;background:#2b2b33;color:#fff;font:600 14px/1.3 system-ui,sans-serif;box-shadow:0 8px 28px rgba(0,0,0,.3)";let t=document.createElement("span");t.style.flex="1";t.textContent="새 버전이 나왔어요"+(jv.app&&jv.app!==APP_VER?` · ${APP_VER} → ${jv.app}`:"");let go=document.createElement("button");go.type="button";go.textContent="업데이트";go.style.cssText="border:0;border-radius:10px;padding:7px 12px;background:#fff;color:#222;font:700 13px system-ui,sans-serif";go.onclick=()=>{try{sessionStorage.dbUpdGo="1"}catch(_){}if(pc){if(/[\\/]live[\\/]/.test(decodeURIComponent(location.pathname))){go.textContent="적용 중…";location.reload()}else{d.remove();j("Daterbase를 껐다 켜면 새 버전이 적용돼요")}return}go.textContent="적용 중…";fetch("./index.html",{cache:"reload"}).catch(()=>{}).then(()=>location.reload())};let x=document.createElement("button");x.type="button";x.textContent="×";x.setAttribute("aria-label","닫기");x.style.cssText="border:0;background:none;color:#fff;font-size:20px;line-height:1;padding:0 4px;opacity:.7";x.onclick=()=>{updX=Date.now();d.remove()};d.append(t,go,x);document.body.appendChild(d)}).catch(()=>{if(man)j("업데이트를 확인하지 못했어요")})}catch(_){}}
 if(typeof window!=="undefined"){setTimeout(()=>webUpd(!1),700);document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible")webUpd(!0)});window.addEventListener("pageshow",()=>webUpd(!0));window.addEventListener("focus",()=>webUpd(!0));window.addEventListener("online",()=>webUpd(!0));setInterval(()=>webUpd(!0),90000)}
@@ -7812,20 +7828,21 @@ var TRL_CUR=null;
 function TrLogH({h}){return s("span",{className:"trl-h",ref:(el)=>{if(el&&el.__h!==h){el.innerHTML=rtClean(h);el.__h=h}}})}
 function TrLogEd({h,on,cls}){let r=q(null),last=q(null);Y(()=>{let el=r.current;if(el&&h!==last.current&&document.activeElement!==el){el.innerHTML=rtClean(h);last.current=h}},[h]);
  let sv=(el)=>{let hh=el.innerHTML;if(hh===last.current)return;last.current=hh;on(txTidy(rtClean(hh)),rtText(el))};
- return s("div",{ref:(el)=>{r.current=el;if(el)el.__sv=()=>sv(el)},className:"trl-ed"+(cls?" "+cls:""),"data-txr":"1",contentEditable:"true",suppressContentEditableWarning:!0,spellCheck:!1,onFocus:(e)=>{TRL_CUR=e.currentTarget},onBlur:(e)=>sv(e.currentTarget),onPaste:(e)=>{e.preventDefault();document.execCommand("insertText",!1,e.clipboardData.getData("text/plain"))}})}
-function TrLogOpt({k,o,x,fixN}){let set=(p)=>trLogVoSet(k,p),
+ return s("div",{ref:(el)=>{r.current=el;if(el)el.__sv=()=>sv(el)},className:"trl-ed"+(cls?" "+cls:""),"data-txr":"1",contentEditable:"true",suppressContentEditableWarning:!0,spellCheck:!1,onFocus:(e)=>{TRL_CUR=e.currentTarget;dispatchEvent(new Event("trl-fo"))},onBlur:(e)=>sv(e.currentTarget),onPaste:(e)=>{e.preventDefault();document.execCommand("insertText",!1,e.clipboardData.getData("text/plain"))}})}
+function TrLogOpt({k,o,x,fixN,onX}){let set=(p)=>trLogVoSet(k,p),
   seg=(key,opts)=>u("div",{className:"trl-seg",children:opts.map(([v,l])=>s("button",{type:"button",className:o[key]===v?"is-on":"","aria-pressed":o[key]===v,onClick:()=>set({[key]:v}),children:l},String(v)))}),
   sw=(key)=>s("button",{type:"button",className:"trl-sw"+(o[key]?" is-on":""),role:"switch","aria-checked":!!o[key],onClick:()=>set({[key]:o[key]?0:1}),children:s("i",{})}),
   rg=(key,min,max,st,unit)=>u("div",{className:"trl-rg",children:[s("input",{type:"range",min,max,step:st,value:o[key],onChange:(e)=>set({[key]:+e.target.value}),"aria-label":key}),s("span",{children:o[key]+unit})]}),
   row=(l,c)=>u("div",{className:"trl-or",children:[s("span",{children:l}),c]},l),bk=k==="book";
  return u("div",{className:"trl-opt",role:"group","aria-label":(bk?"대본":"말풍선")+" 보기 편집",children:[
-  u("div",{className:"trl-oh",children:[s("b",{children:(bk?"대본":"말풍선")+" 보기 편집"}),fixN?s("button",{type:"button",className:"trl-ox",onClick:()=>{let ed=x.ed,dl=x.dl;trPatch("trpgL",x.id,{ed:{},dl:[]});j("고친 본문을 되돌렸어요",()=>trPatch("trpgL",x.id,{ed,dl}))},children:`고친 줄 ${fixN}개 되돌리기`}):null,s("button",{type:"button",className:"trl-ox",onClick:()=>set(null),children:"기본값으로"})]}),
+  u("div",{className:"trl-oh",children:[s("b",{children:(bk?"대본":"말풍선")+" 보기 편집"}),fixN?s("button",{type:"button",className:"trl-ox",onClick:()=>{let ed=x.ed,dl=x.dl;trPatch("trpgL",x.id,{ed:{},dl:[]});j("고친 본문을 되돌렸어요",()=>trPatch("trpgL",x.id,{ed,dl}))},children:`고친 줄 ${fixN}개 되돌리기`}):null,s("button",{type:"button",className:"trl-ox",onClick:()=>set(null),children:"기본값으로"}),onX?s("button",{type:"button",className:"trl-ox trl-oxx",onClick:onX,"aria-label":"닫기",children:s(A,{name:"x",size:15})}):null]}),
   row("글꼴",u("div",{className:"trl-ff",children:[s(FontPick,{value:o.ff||"",onChange:(v)=>set({ff:v||""}),cls:"mb__sel",title:"로그 전체 글꼴"})]})),
   ...(bk?[row("이름 칸 너비",rg("nmw",56,140,4,"px")),row("지문 흐리게",sw("dim")),row("줄 간격",rg("lh",1.4,2.2,.05,"")),row("글자 크기",rg("fs",12,18,.5,"px")),row("판정",seg("dice",[["line","한 줄"],["off","숨기기"]])),row("탭 바뀔 때 머리글",sw("tabHead"))]
-   :[row("내 캐릭터",seg("side",[["right","오른쪽"],["left","왼쪽 같이"]])),row("프로필 동그라미",sw("av")),row("이름",sw("nm")),row("말풍선 색",seg("tint",[[0,"기본"],[1,"캐릭터 색"]])),row("글자 크기",rg("fs",12,18,.5,"px")),row("판정",seg("dice",[["card","카드"],["line","한 줄"],["off","숨기기"]])),row("탭 이름 표시",sw("tabTag"))]),
-  s("p",{className:"trl-otip",children:"편집 중에는 대사·지문·이름을 눌러 바로 고쳐요. 글자를 드래그하면 위 도구로 그 부분만 꾸며요. 원본 파일은 그대로 남아요."})]})}
-function TrLogView({x}){let[st,sst]=z(trLogSt),[raw,sraw]=z(null),[tb,stb]=z(""),[qq,sqq]=z(""),[n,sn]=z(TRL_LIM),[err,serr]=z(""),[ed,sed]=z(0),vo=trLogVo(L((y)=>y.settings.trpgLv));trFonts();
- Y(()=>{let live=1;sraw(null);serr("");sn(TRL_LIM);sed(0);trLogBlob(x).then(async(b)=>{if(!live)return;if(!b){serr(trLogGd()?"로그 파일을 받아 오지 못했어요":"이 기기에는 로그 파일이 없어요");return}let t=await b.text();if(live)sraw(trLogParse(t,/\.html?$/i.test(x.name||"")||/<\s*(p|div|html)[\s>]/i.test(t.slice(0,3000))))}).catch(()=>live&&serr("로그를 읽지 못했어요"));return()=>{live=0}},[x.id]);
+   :[row("내 캐릭터",seg("side",[["right","오른쪽"],["left","왼쪽 같이"]])),row("프로필 동그라미",sw("av")),row("이름",sw("nm")),row("말풍선 색",seg("tint",[[0,"기본"],[1,"캐릭터 색"]])),row("글자 크기",rg("fs",12,18,.5,"px")),row("판정",seg("dice",[["card","카드"],["line","한 줄"],["off","숨기기"]])),row("탭 이름 표시",sw("tabTag"))])]})}
+function TrLogView({x}){let[st,sst]=z(trLogSt),[raw,sraw]=z(null),[tb,stb]=z(""),[qq,sqq]=z(""),[n,sn]=z(TRL_LIM),[err,serr]=z(""),[ed,sed]=z(0),[op,sop]=z(0),[fo,sfo]=z(0),vo=trLogVo(L((y)=>y.settings.trpgLv));trFonts();
+ Y(()=>{if(!op)return;let f=(e)=>{if(e.target.closest&&e.target.closest(".trl-opt,.trl-opb,.fpk,.fpk-btn"))return;sop(0)};document.addEventListener("pointerdown",f,!0);return()=>document.removeEventListener("pointerdown",f,!0)},[op]);
+ Y(()=>{let f=()=>sfo(1);addEventListener("trl-fo",f);return()=>removeEventListener("trl-fo",f)},[]);
+ Y(()=>{let live=1;sraw(null);serr("");sn(TRL_LIM);sed(0);sop(0);sfo(0);trLogBlob(x).then(async(b)=>{if(!live)return;if(!b){serr(trLogGd()?"로그 파일을 받아 오지 못했어요":"이 기기에는 로그 파일이 없어요");return}let t=await b.text();if(live)sraw(trLogParse(t,/\.html?$/i.test(x.name||"")||/<\s*(p|div|html)[\s>]/i.test(t.slice(0,3000))))}).catch(()=>live&&serr("로그를 읽지 못했어요"));return()=>{live=0}},[x.id]);
  if(err)return s("p",{className:"tr-none",children:err});if(!raw)return s("p",{className:"tr-none",children:"로그 읽는 중…"});
  let E=x.ed||{},D=new Set(x.dl||[]),ls=raw.map((l,i)=>({...l,...(E[i]||{}),i})).filter((l)=>!D.has(l.i)),fixN=Object.keys(E).length+D.size,
   fx=()=>trL("trpgL").find((y)=>y.id===x.id)||x,save=(i,p)=>{let c=fx(),e2={...(c.ed||{})};e2[i]={...(e2[i]||{}),...p};trPatch("trpgL",x.id,{ed:e2})},
@@ -7851,9 +7868,10 @@ function TrLogView({x}){let[st,sst]=z(trLogSt),[raw,sraw]=z(null),[tb,stb]=z("")
    ...(tabs.length>1?[["","전체",ls.length],...tabs.map((t)=>[t,t,ls.filter((l)=>l.tab===t).length])].map(([k,l2,c])=>u("button",{type:"button",className:"trl-chip"+(tb===k?" is-on":""),onClick:()=>stb(k),children:[l2," ",s("span",{children:c})]},"tb"+k)):[]),
    ed?null:s("input",{className:"trl-q",type:"search",value:qq,placeholder:"찾기",onChange:(e)=>sqq(e.target.value),"aria-label":"로그에서 찾기"}),
    !bk&&o.side==="right"&&nm.length>1?s("select",{className:"trl-chip",value:me,onChange:(e)=>trPatch("trpgL",x.id,{me:e.target.value}),"aria-label":"내 캐릭터",children:nm.map((k)=>s("option",{value:k,children:"내 캐릭터 "+k},k))}):null,
-   s("button",{type:"button",className:"trl-chip trl-edb"+(ed?" is-on":""),"aria-expanded":!!ed,onClick:()=>{sed(ed?0:1);TRL_CUR=null},children:ed?"편집 끝":"편집"})]}),
-  ed?s(TrLogOpt,{k:bk?"book":"bub",o,x,fixN}):null,
-  ed?s(TxBar,{cls:"trl-txb",get:()=>{let el=TRL_CUR;if(!el||!document.contains(el))return{};let r=txSel(el),c=r?txCurAt(el,r.startContainer,r.startOffset):txCurAt(el,el,0);if(!r)c={...c,fw:!1,fi:!1,tu:!1,ts:!1,tc:""};return c},on:(k,v)=>{let el=TRL_CUR;if(!el||!document.contains(el)){j("고칠 줄을 먼저 눌러 주세요");return}txLive(el,k,v);el.__sv&&el.__sv()}}):null,
+   ed?s("button",{type:"button",className:"trl-chip trl-opb"+(op?" is-on":""),"aria-expanded":!!op,onClick:()=>sop(op?0:1),children:["보기 옵션 ",s(A,{name:op?"chevUp":"chevDown",size:13})]}):null,
+   s("button",{type:"button",className:"trl-chip trl-edb"+(ed?" is-on":""),"aria-expanded":!!ed,onClick:()=>{sed(ed?0:1);sop(0);sfo(0);TRL_CUR=null},children:ed?"편집 끝":"편집"})]}),
+  ed&&op?s(TrLogOpt,{k:bk?"book":"bub",o,x,fixN,onX:()=>sop(0)}):null,
+  ed&&fo?s(TxBar,{cls:"trl-txb",get:()=>{let el=TRL_CUR;if(!el||!document.contains(el))return{};let r=txSel(el),c=r?txCurAt(el,r.startContainer,r.startOffset):txCurAt(el,el,0);if(!r)c={...c,fw:!1,fi:!1,tu:!1,ts:!1,tc:""};return c},on:(k,v)=>{let el=TRL_CUR;if(!el||!document.contains(el)){j("고칠 줄을 먼저 눌러 주세요");return}txLive(el,k,v);el.__sv&&el.__sv()}}):null,
   s("div",{className:"trl-meta",children:`${ls.length}줄 · 캐릭터 ${nm.length} · 판정 ${dc.length}번 (성공 ${dc.filter((d)=>d.c!=="bad").length})`+(fixN?` · 고친 줄 ${fixN}`:"")+(f.length!==ls.length?` · 보이는 줄 ${f.length}`:"")}),
   u("div",{className:"trl-view"+(bk?" is-book":"")+(ed?" is-ed":"")+(o.ff?" has-ff":"")+(!bk&&!o.av?" no-av":"")+(!bk&&o.tint?" is-tint":"")+(bk&&!o.dim?" no-dim":""),style:vst,children:[...rows,f.length>n?s("button",{type:"button",className:"trl-more",onClick:()=>sn(n+TRL_LIM),children:`더 보기 (${f.length-n}줄 남음)`},"more"):null,!f.length?s("p",{className:"tr-none",children:"찾는 줄이 없어요"},"none"):null]})]})}
 function trLogSz(n){return n>=1e6?(n/1e6).toFixed(1)+"MB":Math.max(1,Math.round((n||0)/1e3))+"KB"}

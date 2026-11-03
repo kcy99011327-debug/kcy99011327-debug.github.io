@@ -153,7 +153,7 @@ function layout(out){const n=Array(12).fill(0);out.forEach(j=>n[j.m]++);
     const kx=R.w/w,ky=R.h/h,PX=u=>R.x+Math.floor((u+.5)*kx),PY=v=>R.y+Math.floor((v+.5)*ky),EX=u=>R.x+Math.round(u*kx),EY=v=>R.y+Math.round(v*ky);
     q.L.forEach((l,r)=>{for(let t=0;t<l;t++){const u=q.off[r]+t;lots.push(q.o?[PX(r),PY(u)]:[PX(u),PY(r)]);}});
     // 골목: 줄 사이 경계선을 따라 좁은 길(두 줄이 겹치는 구간만)
-    for(let r=1;r<q.L.length;r++){const s0=Math.min(q.off[r-1],q.off[r]),s1=Math.max(q.off[r-1]+q.L[r-1],q.off[r]+q.L[r]);ALY.push(q.o?[EX(r),R.y,EX(r),R.y+R.h]:[R.x,EY(r),R.x+R.w,EY(r)]);/* 길목은 블록 끝(길)까지 이어 그림 */}
+    for(let r=1;r<q.L.length;r++){const s0=Math.min(q.off[r-1],q.off[r]),s1=Math.max(q.off[r-1]+q.L[r-1],q.off[r]+q.L[r]);ALY.push(q.o?[EX(r),R.y,EX(r),R.y+R.h,m]:[R.x,EY(r),R.x+R.w,EY(r),m]);/* 길목은 블록 끝(길)까지 이어 그림 */}
     lots.sort((a,b)=>(a[0]+a[1])-(b[0]+b[1])||a[0]-b[0]);
     lots.forEach(([lx,ly],i)=>TI[lx+","+ly]={m,i});for(let a=0;a<R.w;a++)for(let b=0;b<R.h;b++)CEL[(R.x+a)+","+(R.y+b)]=m;PL[m]={x,y,w:R.w,h:R.h,lots,cell:{x:R.x,y:R.y,w:R.w,h:R.h}};});
   GX=NR*U;GY=3*U;}
@@ -297,16 +297,19 @@ function mkIso(root,cfg){
   const GT=["a","b","c","d","e","f"];function ghost(g){const h=g.h,o=h%4==0,j={k:o?"o":"c",cl:"_g",t:GT[h%6],fee:o?[200000,400000,700000][h%3]:[50000,100000,200000][h%3],done:true};
     const SV=SHP;SHP={a:0,b:1,c:2,d:3,e:4,f:5};const sv=ROOF._g;ROOF._g="var(--gh)";const r=`<g class="gh">${iso(j,g.cx,g.cy,o?.85:.78)}</g>`;SHP=SV;return r;}
   // 공원: 연못·벤치·꽃밭·산책길
+  // 구불 산책길: 옆 도로 가장자리에서 시작해 공원 안으로 구불구불(도로 둘이면 둘을 잇고, 하나면 벤치·나무까지) — 04 2026-11-03
+  function wPath(t,ex,ey){const nb=t.nb||[];if(!nb.length)return "";const A=nb[0],B=nb[1]||[ex,ey],dx=B[0]-A[0],dy=B[1]-A[1],L=Math.hypot(dx,dy)||1,px=-dy/L,py=dx/L,w=L*(t.hs%2?.32:-.32);
+    return `<path class="pth" d="M${A[0].toFixed(1)} ${A[1].toFixed(1)}C${(A[0]+dx*.33+px*w).toFixed(1)} ${(A[1]+dy*.33+py*w).toFixed(1)} ${(A[0]+dx*.66-px*w).toFixed(1)} ${(A[1]+dy*.66-py*w).toFixed(1)} ${B[0].toFixed(1)} ${B[1].toFixed(1)}"/>`;}
   function park(t){const k=TW/58,{cx,cy}=t,v=t.v%2?1:3,a=TW/2,b=TH/2;
     if(v==0){let d=`<ellipse class="pdr" cx="${cx}" cy="${cy+1.2*k}" rx="${a*.6}" ry="${b*.56}"/><ellipse class="pdr2" cx="${cx}" cy="${cy}" rx="${a*.6}" ry="${b*.56}"/><ellipse class="pd" cx="${cx}" cy="${cy+.6*k}" rx="${a*.5}" ry="${b*.46}"/>`;
       [[-.2,.05],[.18,-.1]].forEach(([u,w])=>d+=`<ellipse class="lily" cx="${cx+u*a}" cy="${cy+w*b}" rx="${3*k}" ry="${1.5*k}"/>`);
       for(let i=0;i<5;i++){const an=Math.PI*(.15+i*.18);d+=`<ellipse class="rk" cx="${cx+Math.cos(an)*a*.6}" cy="${cy+Math.sin(an)*b*.56}" rx="${2.4*k}" ry="${1.5*k}"/>`;}
       return `<g class="pk">${d}</g>`;}
-    if(v==1)return `<g class="pk"><g transform="translate(${cx-a*.15},${cy+b*.15})">${bench(k)}</g><line class="lp" x1="${cx+a*.35}" y1="${cy+b*.1}" x2="${cx+a*.35}" y2="${cy-14*k}"/><circle class="lpb" cx="${cx+a*.35}" cy="${cy-14*k}" r="${1.8*k}"/></g>`;
+    if(v==1)return `<g class="pk">${wPath(t,cx-a*.15,cy+b*.15)}<g transform="translate(${cx-a*.15},${cy+b*.15})">${bench(k)}</g><line class="lp" x1="${cx+a*.35}" y1="${cy+b*.1}" x2="${cx+a*.35}" y2="${cy-14*k}"/><circle class="lpb" cx="${cx+a*.35}" cy="${cy-14*k}" r="${1.8*k}"/></g>`;
     if(v==2){const hh=3*k;let d=`<ellipse class="fbw" cx="${cx}" cy="${cy}" rx="${a*.48}" ry="${b*.44}"/><rect class="fbw" x="${cx-a*.48}" y="${cy-hh}" width="${a*.96}" height="${hh}"/><ellipse class="fbt" cx="${cx}" cy="${cy-hh}" rx="${a*.48}" ry="${b*.44}"/><ellipse class="fbs" cx="${cx}" cy="${cy-hh}" rx="${a*.4}" ry="${b*.36}"/>`;
       const fl=[];for(let i=0;i<9;i++){const an=i*2.4,r=.1+(i%4)*.07;fl.push([cx+Math.cos(an)*a*r,cy-hh+Math.sin(an)*b*r,i]);}fl.sort((p,q)=>p[1]-q[1]);
       fl.forEach(([x,y,i])=>d+=`<line class="stem" x1="${x}" y1="${y}" x2="${x}" y2="${y-3*k}"/><circle class="fl f${i%3}" cx="${x}" cy="${y-3.4*k}" r="${1.6*k}"/>`);return `<g class="pk">${d}</g>`;}
-    return `<g class="pk">${tree(cx-a*.35,cy-b*.25,(t.o)%3)}</g>`;}
+    return `<g class="pk">${wPath(t,cx-a*.35,cy-b*.25)}${tree(cx-a*.35,cy-b*.25,(t.o)%3)}</g>`;}
   // 벤치: 땅 격자 방향(번갈아 두 방향)을 따르는 입체 벤치. 등받이(뒤) → 다리 → 앉는 판 순서
   let BNC=0;function bench(k){const ax=(BNC++)%2,L=.17,D=.055,u=ax?[-TW/2,TH/2]:[TW/2,TH/2],v=ax?[-TW/2,-TH/2]:[TW/2,-TH/2],
       pt=(a,b,z)=>[u[0]*a+v[0]*b,u[1]*a+v[1]*b-z],sh=3.2*k,th=1*k,bh=4.2*k;
@@ -377,7 +380,19 @@ function mkIso(root,cfg){
         let tl1=`<g class="tlt"><ellipse class="crs" cx="${px}" cy="${py}" rx="${2.2*k}" ry="${1.1*k}"/><rect class="tpole" x="${px-.9*k}" y="${py-h}" width="${1.8*k}" height="${h}" rx="${.9*k}"/>`
           +`<polygon class="tbs" points="${P([[bx+bw,by],[bx+bw+sd,by-sd*.5],[bx+bw+sd,by+bh-sd*.5],[bx+bw,by+bh]])}"/><polygon class="tbt" points="${P([[bx,by],[bx+sd,by-sd*.5],[bx+bw+sd,by-sd*.5],[bx+bw,by]])}"/><rect class="tbx" x="${bx}" y="${by}" width="${bw}" height="${bh}" rx="${.8*k}"/>`
           +["lr","ly","lg"].map((c,i)=>{const cy2=by+2.3*k+i*4.2*k;return `<circle class="${c}" cx="${px}" cy="${cy2}" r="${1.55*k}"/><path class="tvi" d="M${px-1.9*k} ${cy2-.2*k}a${1.9*k} ${1.9*k} 0 0 1 ${3.8*k} 0"/>`;}).join("")+`</g>`;DYN.push({o:qq[0]+qq[1]-1,y:py,s:tl1});});}));
-    let al="";ALY.forEach(([x1,y1,x2,y2])=>{const v=x1==x2,w=.11;al+=`<polygon class="aly" points="${Q(v?[[x1-w,y1],[x1+w,y1],[x1+w,y2],[x1-w,y2]]:[[x1,y1-w],[x2,y1-w],[x2,y1+w],[x1,y1+w]])}"/>`;});
+    let al="";
+    // 구불 골목 + 집 대문길 (04 2026-11-03 "산책길 다 이어지게, 집으로 들어가는 길도, 실제 쓰는 길처럼")
+    const aOff=(t,L,sd)=>{const tp=Math.max(0,Math.min(1,t/.9,(L-t)/.9));return .2*Math.sin(t*Math.PI/1.7+sd)*tp;};
+    const rib=(pts,w)=>{const Lf=[],Rt=[];pts.forEach((p,i)=>{const a=pts[Math.max(0,i-1)],b=pts[Math.min(pts.length-1,i+1)],dx=b[0]-a[0],dy=b[1]-a[1],l=Math.hypot(dx,dy)||1,nx=-dy/l*w,ny=dx/l*w;Lf.push([p[0]+nx,p[1]+ny]);Rt.push([p[0]-nx,p[1]-ny]);});return Lf.concat(Rt.reverse());};
+    const AL=ALY.map(([x1,y1,x2,y2,m])=>{const v=x1==x2,L=v?y2-y1:x2-x1,sd=((x1*7+y1*3)%6),at=t=>v?[x1+aOff(t,L,sd),y1+t]:[x1+t,y1+aOff(t,L,sd)];const pts=[];for(let t=0;t<=L+1e-6;t+=.1)pts.push(at(Math.min(t,L)));al+=`<polygon class="aly" points="${Q(rib(pts,.11))}"/>`;return {v,x1,y1,L,m,at};});
+    J.filter(vis).forEach(j=>{const B=PL[j.m]&&PL[j.m].cell;if(!B)return;const [lx,ly]=lotXY(j.m,j.lot),cx=lx+.5,cy=ly+.5;
+      // 대문은 화면 앞쪽(+y). 앞 마당 가장자리(cy+.5)로 나와서, 바로 앞이 길(블록 끝·가로 골목)이면 그대로, 아니면 가까운 세로 골목·블록 옆으로 휘어 감
+      const fy=cy+.5,S=[cx,cy+.2];let T=null,dm=1e9;const tk=(c,d)=>{if(d<dm){dm=d;T=c;}};
+      if(Math.abs(B.y+B.h-fy)<.05)tk([cx,B.y+B.h],0);
+      AL.forEach(a=>{if(a.m!==j.m)return;if(!a.v){const t=cx-a.x1;if(t>=0&&t<=a.L){const c=a.at(t);if(c[1]>=fy-.25&&c[1]-fy<.45)tk(c,0);}}else{const t=fy-a.y1;if(t>=0&&t<=a.L){const c=a.at(t);tk(c,Math.abs(c[0]-cx));}}});
+      tk([B.x,fy],cx-B.x);tk([B.x+B.w,fy],B.x+B.w-cx);
+      const M=[cx,fy],pts=[];for(let i=0;i<=12;i++){const u=i/12,v=1-u;pts.push([v*v*S[0]+2*v*u*M[0]+u*u*T[0],v*v*S[1]+2*v*u*M[1]+u*u*T[1]]);}
+      al+=`<polygon class="aly ent" points="${Q(rib(pts,.055))}"/>`;});
     let arc="";{const Hm=TW*.42;const run=(vert,f)=>{let t0=null;for(let t=a0;t<=(vert?ay:ax);t++){const w=t<(vert?ay:ax)&&(vert?ZN(f,t):ZN(t,f))==1;if(w&&t0==null)t0=t;if(!w&&t0!=null){const t1=t,L=t1-t0,n=Math.max(1,Math.round(L/3));
         [RI-.1,1-RI+.1].forEach(e=>{let pa="",hg="";for(let k=0;k<=L*8;k++){const u=t0+k/8,q=vert?[f+e,u]:[u,f+e],[px,py]=G(...rotC(...q)),hh=Hm*Math.abs(Math.sin(Math.PI*n*(u-t0)/L));pa+=(k?"L":"M")+px.toFixed(1)+" "+(py-hh).toFixed(1);if(k%4==0&&k&&k<L*8)hg+=`M${px.toFixed(1)} ${py.toFixed(1)}V${(py-hh).toFixed(1)}`;}
           arc+=`<path class="hng" d="${hg}"/><path class="arc" d="${pa}"/>`;});t0=null;}}};if(BB.x>=0)run(1,BB.x);if(BB.y>=0)run(0,BB.y);}
@@ -409,7 +424,7 @@ function mkIso(root,cfg){
       tiles+=`<polygon class="tl${inPk?" pkg":ln?(fut?" fu":" ln"):road?(isRd?" rd":" gr"+(fut?" fu":"")):m>CM?" fu":jj&&jj.done?(jj.k=="o"?" pv":" yd"):m==CM?" cur":""}${out?" ou":""}${zn==2?" fb":""}"  ${cfg.tile?cfg.tile(m,road,x,y):""} data-m="${m}" data-i="${i}" points="${P([[sx,sy],[sx+TW/2,sy+TH/2],[sx,sy+TH],[sx-TW/2,sy+TH/2]])}"/>`;
       const j=occ[x+","+y];if(j)(j.done?objs:wips).push({o:rx+ry,j,cx:sx,cy:sy+TH/2});
       else if(inPk);
-      else if(road&&!ln&&!isRd&&!fut&&!out&&hsh((x+9)*41+(y+9)*29)%7==0)parks.push({o:rx+ry,cx:sx,cy:sy+TH/2,v:hsh((x+9)*3+(y+9)*5)%4});
+      else if(road&&!ln&&!isRd&&!fut&&!out&&hsh((x+9)*41+(y+9)*29)%7==0)parks.push({o:rx+ry,cx:sx,cy:sy+TH/2,v:hsh((x+9)*3+(y+9)*5)%4,nb:[[1,0],[-1,0],[0,1],[0,-1]].filter(([dx,dy])=>{const X2=x+dx,Y2=y+dy,o2=X2<0||Y2<0||X2>=GX||Y2>=GY,g2=o2&&((X2<0||X2>=GX)&&(X2+100)%5==4||(Y2<0||Y2>=GY)&&(Y2+100)%5==4)&&okR(X2,Y2);return (RDX.has(X2)&&X2<GX||RDY.has(Y2)&&Y2<GY)&&!inMR(X2,Y2)&&okR(X2,Y2)||g2;}).map(([dx,dy])=>{const [a2,b2]=scr(...rot(x+dx,y+dy));return [(sx+a2)/2,(sy+b2)/2+TH/2];}),hs:hsh((x+9)*11+(y+9)*23)});
       else if((out||EMP.some(inR))&&!isRd&&hsh((x+99)*37+(y+99)*11)%(zn==2?5:2)==0)ghosts.push({o:rx+ry,cx:sx,cy:sy+TH/2,h:hsh((x+99)*5+(y+99)*7)});
       else if(road&&!ln&&!isRd&&!fut&&hsh((x+9)*31+(y+9)*17)%5<(out?1:2))trees.push({o:rx+ry,cx:sx,cy:sy+TH/2,v:hsh((x+9)*7+(y+9)*13)%3,op:1});}
     const c=[[0,0],[Wd,0],[Wd,Hd],[0,Hd]].map(([x,y])=>scr(x,y));

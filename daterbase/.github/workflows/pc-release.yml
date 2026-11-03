@@ -58,7 +58,11 @@ jobs:
         run: |
           ls -la release release-friend
           v="${{ steps.ver.outputs.v }}"
+          # 버전 없는 이름도 같이 올림: 늘 최신을 받는 고정 주소 releases/latest/download/Daterbase-Friend-Setup.exe (구매자 안내용)
+          cp release/Daterbase-Setup-$v.exe release/Daterbase-Setup.exe
+          cp release-friend/Daterbase-Friend-Setup-$v.exe release-friend/Daterbase-Friend-Setup.exe
           gh release create "pc-v$v" --target "$GITHUB_SHA" \
             release/Daterbase-Setup-*.exe release/Daterbase-Setup-*.exe.blockmap release/latest.yml \
             release-friend/Daterbase-Friend-Setup-*.exe release-friend/Daterbase-Friend-Setup-*.exe.blockmap release-friend/friend.yml \
+            release/Daterbase-Setup.exe release-friend/Daterbase-Friend-Setup.exe \
             --title "Daterbase PC $v" --notes "Daterbase PC 프로그램 $v" --latest

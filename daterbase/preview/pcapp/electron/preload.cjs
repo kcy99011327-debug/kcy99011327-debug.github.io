@@ -12,6 +12,7 @@ contextBridge.exposeInMainWorld('planner', {
   gcSrv: true, // 0.9.14~: 기본 클라이언트 토큰을 제보 서버로 받음
   gcalFetch: (o) => ipcRenderer.invoke('gcal-fetch', o),
   gdOk: true, // 0.9.15~: 구글 드라이브 동기화
+  auOk: true, // 0.9.16~: 프로그램 자동 업데이트 (이게 없으면 화면이 '새 PC 프로그램 받기'를 띄움)
   gdFetch: (o) => ipcRenderer.invoke('gd-fetch', o),
   gcalLogout: () => ipcRenderer.invoke('gcal-logout'),
   listProcesses: () => ipcRenderer.invoke('list-processes'),

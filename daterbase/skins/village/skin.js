@@ -1,4 +1,4 @@
-/* Daterbase 스킨: 마을 (종이 모형) — 시안 미리보기. 데이터: comm(커미션)·outs(외주) 읽기 전용 */
+/* Daterbase 스킨: 도시 계획 (옛 이름 마을, 종이 모형) — 시안 미리보기. 데이터: comm(커미션)·outs(외주) 읽기 전용 */
 (function(){
 const H=DB.skin.R;const now=new Date(),Y0=now.getFullYear(),CM0=now.getMonth();let Y=Y0,CM=CM0,FM=null,YRS=[Y0];
 const MN=["1월","2월","3월","4월","5월","6월","7월","8월","9월","10월","11월","12월"];
@@ -90,13 +90,13 @@ function showPop(j,x,y){tipHide();
 }
 function showMenu(j,x,y){
   menu.innerHTML=`<button data-a="info">자세히 보기</button><button data-a="open">의뢰 열기</button><hr>
-   ${j.done?"":`<button data-a="fin">완료로 바꾸기</button><hr>`}<button data-a="nb">같은 의뢰인 집 보기</button><button data-a="mv">자리 옮기기 <span class="ar">끌기</span></button><hr><button data-a="hide" class="del">마을에서 숨기기</button>`;
+   ${j.done?"":`<button data-a="fin">완료로 바꾸기</button><hr>`}<button data-a="nb">같은 의뢰인 집 보기</button><button data-a="mv">자리 옮기기 <span class="ar">끌기</span></button><hr><button data-a="hide" class="del">도시 계획에서 숨기기</button>`;
   menu.classList.add("on");place(menu,x,y);
   menu.onclick=e=>{const a=e.target.closest("button")?.dataset.a;if(!a)return;closeAll();
     if(a=="info")showPop(j,x,y);if(a=="open")say(`${j.cl} · ${j.t} 열기 (시안에서는 이동 없음)`);
     if(a=="fin")finish(j);if(a=="nb"){V.forEach(v=>v.nb(j.cl));}
     if(a=="mv")say("집을 끌어서 빈 자리에 놓으세요");
-    if(a=="hide"){j.hid=true;renderAll();say("마을에서 숨겼어요 · 의뢰 기록은 그대로",()=>{j.hid=false;renderAll();});}};
+    if(a=="hide"){j.hid=true;renderAll();say("도시 계획에서 숨겼어요 · 의뢰 기록은 그대로",()=>{j.hid=false;renderAll();});}};
 }
 function finish(j){const old={...j};j.done=true;j.m=CM;j.d=31;j.start=12;j.isNew=true;
   const used=J.filter(x=>x!==j&&x.done&&x.m==CM).map(x=>x.lot);let l=0;while(used.includes(l))l++;j.lot=l;
@@ -463,7 +463,7 @@ function mkIso(root,cfg){
     bd.querySelectorAll(".tl[data-m]").forEach(t=>{const m=+t.dataset.m;if(m>=0&&m!==FM)t.onclick=()=>{FM=m;closeAll();render();};});
     bd.querySelectorAll(".mlg").forEach((g,m)=>g.onclick=()=>{FM=m;closeAll();render();});
     root.querySelector("[data-stat]").innerHTML=`<span><b>${done.length}</b>채</span><span><b>${nC}</b>집</span><span><b>${done.length-nC}</b>건물</span><span><b>${nb}</b>이웃</span><span><b>${J.filter(j=>!j.done&&!j.hid).length}</b>${cfg.wip}</span>`;
-    root.querySelectorAll("[data-cap]").forEach(e=>e.textContent=`2026 · ${done.length}채의 마을`);
+    root.querySelectorAll("[data-cap]").forEach(e=>e.textContent=`2026 도시 계획 · ${done.length}채`);
     root.querySelectorAll("[data-sub]").forEach(e=>e.textContent=`커미션 ${nC} · 외주 ${done.length-nC} · 이웃 ${nb} · ${won(sum)}`);
   }
   // 한 달 보기: 달력 칸(일~토) 위에 그날 끝낸 집이 섬
@@ -545,7 +545,7 @@ const CFG={depth:8,wip:"접는 중",
   base:(c,d)=>{const o=10;return `<polygon class="shad" points="${P(c.map(p=>[p[0]+o,p[1]+o+d]))}"/><polygon class="sheet2" points="${P([c[3],c[2],[c[2][0],c[2][1]+d],[c[3][0],c[3][1]+d]])}"/><polygon class="sheet2" points="${P([c[2],c[1],[c[1][0],c[1][1]+d],[c[2][0],c[2][1]+d]])}" style="filter:brightness(.93)"/>`;},
   flag:(x,y,m)=>{const w=m>8?48:40,H=34,c=m==CM?" now":"";return [`<g class="mpo${c}"><ellipse cx="${x}" cy="${y}" rx="5" ry="2.5"/><line x1="${x}" y1="${y}" x2="${x}" y2="${y-H}"/></g>`,`<g class="mlg${c}" transform="translate(${x},${y-H})"><line class="mpl" x1="0" y1="0" x2="0" y2="14"/><rect x="0" y="-2" width="${w}" height="24" rx="4"/><text x="${w/2}" y="14.5" text-anchor="middle">${MN[m]}</text></g>`]},
   end:(main,v,btn)=>{const d=main.querySelector(".desk"),on=!d.classList.contains("photo");const f=d.querySelector(".flash");
-    if(on){d._z=TW;v.zoom(52);d.querySelector(".scr").scrollTo(0,0);f.classList.remove("go");void f.offsetWidth;f.classList.add("go");d.classList.add("photo");btn.textContent="사진 치우기";say("2026 마을 사진을 앨범에 넣었어요");}else{d.classList.remove("photo");v.zoom(d._z||88);btn.textContent="사진 한 장 찍기";}},
+    if(on){d._z=TW;v.zoom(52);d.querySelector(".scr").scrollTo(0,0);f.classList.remove("go");void f.offsetWidth;f.classList.add("go");d.classList.add("photo");btn.textContent="사진 치우기";say("2026 도시 계획 사진을 앨범에 넣었어요");}else{d.classList.remove("photo");v.zoom(d._z||88);btn.textContent="사진 한 장 찍기";}},
   artEx:""};
 DB.skin.screen("comm",Village);
 })();

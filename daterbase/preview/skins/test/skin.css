@@ -1,4 +1,0 @@
-/* 테스트 스킨: 색만 바꿈 (화면 묶음 작업 확인용) */
-html body.sk-test{--bg:#fff4e6;--surface:#fffdf8;--surface-2:#fdf0dc;--line:#efd9b8;--fg:#3b2a1a;--muted:#9a7b5c;--accent:#f0a35e;--accent-strong:#d9622b;--accent-soft:#fde3c8}
-html body.sk-test [data-sk="sidebar"]{background:#fbe3c4}
-html body.sk-test [data-sk="cal"],html body.sk-test [data-sk="day"]{border-radius:18px}

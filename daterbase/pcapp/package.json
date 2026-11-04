@@ -1,7 +1,7 @@
 {
   "name": "daterbase",
   "productName": "Daterbase",
-  "version": "0.9.17",
+  "version": "0.9.19",
   "private": true,
   "description": "Daterbase",
   "main": "electron/main.cjs",

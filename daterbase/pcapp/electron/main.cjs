@@ -58,7 +58,33 @@ let DB_SHARE = false;
 try { DB_SHARE = !!require('../package.json').dbShare; } catch (e) {}
 // 주소 이전 때 DB_ORG만 바꿔 새 설치 파일을 만듦 (옛 설치본은 옛 주소 저장소에서 계속 업데이트 받음)
 const DB_ORG = 'daterbase';
-const LIVE_URL = 'https://' + DB_ORG + '.github.io/daterbase/' + (DB_SHARE ? 'share/' : '');
+/*pc0918*/ // 2026-11 도메인 이사: 새 주소 먼저, 안 되면 옛 주소 (저장소 바꾸기 전까지)
+const LIVE_URLS = DB_SHARE ? ['https://app.daterbase.net/share/', 'https://' + DB_ORG + '.github.io/daterbase/share/'] : ['https://me.daterbase.net/', 'https://' + DB_ORG + '.github.io/daterbase/'];
+let LIVE_URL = LIVE_URLS[0];
+// 개인용 새 주소는 잠겨 있어서 PC는 서비스 토큰으로 열어요. 값은 userData/cf-access.json 에만 있음.
+let cfAcc = null;
+const cfHdr = () => {
+  if (cfAcc === null) {
+    cfAcc = {};
+    try { const j = JSON.parse(fs.readFileSync(path.join(app.getPath('userData'), 'cf-access.json'), 'utf8').replace(/^\uFEFF/, '')); if (j && j.id && j.secret) cfAcc = { 'CF-Access-Client-Id': String(j.id).trim(), 'CF-Access-Client-Secret': String(j.secret).trim() }; } catch (e) {}
+  }
+  return cfAcc;
+};
+/*pc0919*/ // Cloudflare는 .html 주소를 / 나 /m 으로 돌려보내요: 같은 주소 안이면 토큰 머리글을 붙인 채 따라가요
+const liveFetch = async (u, o) => {
+  let r;
+  for (let i = 0; i < 4; i++) {
+    r = await fetch(u, { ...(o || {}), redirect: 'manual', headers: { ...((o && o.headers) || {}), ...(/^https:\/\/me\.daterbase\.net\//.test(u) ? cfHdr() : {}) } });
+    if (r.status < 300 || r.status >= 400) return r;
+    const loc = r.headers.get('location');
+    if (!loc) return r;
+    let nu;
+    try { nu = new URL(loc, u); } catch (e) { return r; }
+    if (nu.origin !== new URL(u).origin) return r;
+    u = nu.href;
+  }
+  return r;
+};
 const DIST = path.join(__dirname, DB_SHARE ? '../dist-share' : '../dist');
 const readVer = (dir) => {
   try {
@@ -78,6 +104,7 @@ const readApp = (dir) => {
   }
 };
 let updFrom = '';
+let updNs = '';
 let updTo = '';
 const liveDir = () => path.join(app.getPath('userData'), 'live');
 function startFile() {
@@ -94,9 +121,16 @@ async function checkUpdate() {
   if (updating || typeof fetch !== 'function') return;
   updating = true;
   try {
-    const r = await fetch(LIVE_URL + 'version.json?t=' + Date.now(), { cache: 'no-store' });
-    if (!r.ok) return;
-    const info = await r.json();
+    let info = null;
+    for (const base of LIVE_URLS) {
+      try {
+        const r = await liveFetch(base + 'version.json?t=' + Date.now(), { cache: 'no-store', redirect: 'manual' });
+        if (!r.ok) continue;
+        const j = await r.json();
+        if (j && j.v) { info = j; LIVE_URL = base; break; }
+      } catch (e) {}
+    }
+    if (!info) return;
     const v = Number(info.v) || 0;
     const files = Array.isArray(info.files) ? info.files.filter((f) => /^[\w.\-]+$/.test(f)) : [];
     const dist = DIST;
@@ -124,8 +158,11 @@ async function checkUpdate() {
         fs.copyFileSync(keep, path.join(tmp, f));
         continue;
       }
-      const rr = await fetch(LIVE_URL + f + '?v=' + v, { cache: 'no-store' });
-      if (!rr.ok) throw new Error(f + ' ' + rr.status);
+      let rr = null;
+      for (const b of [LIVE_URL, ...LIVE_URLS.filter((x) => x !== LIVE_URL)]) {
+        try { const x = await liveFetch(b + f + '?v=' + v, { cache: 'no-store' }); if (x.ok) { rr = x; break; } } catch (e) {}
+      }
+      if (!rr) throw new Error(f);
       fs.writeFileSync(path.join(tmp, f), Buffer.from(await rr.arrayBuffer()));
     }
     // 글꼴·아이콘처럼 잘 안 바뀌는 파일은 설치된 것을 그대로 복사
@@ -134,6 +171,7 @@ async function checkUpdate() {
       if (!fs.existsSync(path.join(tmp, f))) fs.copyFileSync(path.join(dist, f), path.join(tmp, f));
     }
     updTo = info.app ? String(info.app) : readApp(tmp);
+    try { const cv = Math.max(readVer(dist), readVer(live)); updNs = (Array.isArray(info.ns) ? info.ns : []).filter((x) => Array.isArray(x) && Number(x[0]) > cv && x[1]).sort((a, b) => b[0] - a[0]).slice(0, 3).map((x) => String(x[1]).slice(0, 60)).join(' · '); } catch (e) { updNs = ''; }
     fs.writeFileSync(path.join(tmp, 'version.json'), JSON.stringify({ v, app: updTo }));
     fs.rmSync(live, { recursive: true, force: true });
     fs.renameSync(tmp, live);
@@ -147,11 +185,14 @@ async function checkUpdate() {
 }
 // 창이 숨겨져 있거나 최소화돼 있으면 알림 창이 안 보이니, 작업 표시줄을 깜빡이고 창을 열 때 물어봐요
 let askPending = false;
+let lastAsk = 0;
 let askAbort = null;
 async function askUpdate() {
   if (!win || win.isDestroyed()) return;
   // 같은 버전 안의 작은 수정은 묻지 않음: 다음 실행 때 live 폴더로 자동 적용돼요
-  if (updFrom && updTo && updFrom === updTo) { askPending = false; return; }
+  if (updFrom && updTo && updFrom === updTo && DB_SHARE) { askPending = false; return; }
+  // 개인용은 자주 올라가서 3시간에 한 번만 물어요. 그 사이 받은 건 다음에 켤 때 자동으로 바뀌어요
+  if (!DB_SHARE && Date.now() - lastAsk < 3 * 60 * 60 * 1000) { askPending = false; return; }
   if (!win.isVisible() || win.isMinimized()) { askPending = true; try { win.flashFrame(true); } catch (e) {} return; }
   askPending = false;
   try { win.flashFrame(false); } catch (e) {}
@@ -160,6 +201,7 @@ async function askUpdate() {
   if (askAbort) { try { askAbort.abort(); } catch (e) {} }
   const ac = new AbortController();
   askAbort = ac;
+  lastAsk = Date.now();
   const { response } = await dialog.showMessageBox(win, {
     signal: ac.signal,
     type: 'info',
@@ -168,7 +210,7 @@ async function askUpdate() {
     cancelId: 1,
     title: 'Daterbase 업데이트',
     message: '새 버전을 받았어요.' + (updFrom && updTo && updFrom !== updTo ? `  (${updFrom} → ${updTo})` : updTo ? `  (${updTo})` : ''),
-    detail: '지금 적용하면 화면이 새로 고쳐져요. 데이터는 그대로예요. (나중에를 고르면 다음 실행 때 자동 적용돼요)',
+    detail: (updNs ? '바뀐 것: ' + updNs + '\n\n' : '') + '지금 적용하면 화면이 새로 고쳐져요. 데이터는 그대로예요. (나중에를 고르면 다음 실행 때 자동 적용돼요)',
   });
   if (askAbort !== ac) return;
   askAbort = null;
@@ -935,7 +977,15 @@ ipcMain.handle('open-ext', (_e, url) => {
 
 ipcMain.handle('bk-open', () => { try { fs.mkdirSync(bkDir(), { recursive: true }); shell.openPath(bkDir()); return true; } catch (e) { return false; } });
 
+// /*wPcCache*/ 웹 캐시 상한 100MB (무게 점검 2026-11-03)
+try { app.commandLine.appendSwitch('disk-cache-size', String(100 * 1024 * 1024)); } catch (e) {}
 app.whenReady().then(() => {
+  try {
+    const f = path.join(app.getPath('userData'), 'cache-trim-1103');
+    if (!fs.existsSync(f)) { require('electron').session.defaultSession.clearCache().then(() => { try { fs.writeFileSync(f, '1'); } catch (e) {} }).catch(() => {}); }
+  } catch (e) {}
+  // 화면 안에서 개인용 새 주소를 읽을 때(업데이트 알림 등)도 서비스 토큰을 붙여요
+  try { const h = cfHdr(); if (h['CF-Access-Client-Id']) require('electron').session.defaultSession.webRequest.onBeforeSendHeaders({ urls: ['https://me.daterbase.net/*'] }, (d, cb) => cb({ requestHeaders: { ...d.requestHeaders, ...h } })); } catch (e) {}
   createWindow();
   // Ctrl+Alt+N: 어디서든 새 메모지 (다른 프로그램이 쓰고 있으면 Ctrl+Shift+Alt+N)
   const memoNew = () => {

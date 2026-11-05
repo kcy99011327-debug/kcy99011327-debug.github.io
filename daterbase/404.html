@@ -1,0 +1,9 @@
+<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow"><title>Daterbase</title>
+<style>:root{--bg:#f6f4f0;--fg:#26231f;--mut:#78726a;--ac:#5b5bd6}@media (prefers-color-scheme:dark){:root{--bg:#18171a;--fg:#eceae6;--mut:#a29d96;--ac:#9a9af0}}body{margin:0;min-height:100vh;display:grid;place-items:center;background:var(--bg);color:var(--fg);font:16px/1.6 system-ui,sans-serif;word-break:keep-all}main{max-width:360px;padding:24px 18px;text-align:center}a.b{display:inline-block;margin-top:14px;padding:11px 20px;border-radius:999px;background:var(--ac);color:#fff;text-decoration:none;font-weight:700}p{color:var(--mut);margin:8px 0 0}</style></head>
+<body><main><b style="font-size:19px">Daterbase 주소가 바뀌었어요</b><p>이 페이지는 새 주소로 옮겼어요.</p><a class="b" id="go" href="https://app.daterbase.net/share/">새 주소로 가기</a></main>
+<script>/*gate404 11-04: 옛 주소의 없는 페이지 → 새 주소. 공개 페이지(소개·도움말·안내·테마·약관)는 같은 자리로 바로 보내요. */
+(function(){var p=location.pathname.replace(/^\/daterbase\/?/,"").replace(/^\/+/,""),q=location.search+location.hash,A="https://app.daterbase.net/",d;
+if(/^(about|help|guide|skins)(\/|$)/.test(p)||/^privacy(\.html)?$/.test(p)){d=A+p+q;location.replace(d)}
+else if(/^preview(\/|$)/.test(p))d="https://me.daterbase.net/"+q;
+else d=A+"share/"+q;
+document.getElementById("go").href=d})()</script></body></html>
